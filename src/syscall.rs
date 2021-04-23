@@ -63,7 +63,6 @@ use crate::{
     },
     elf,
     fs,
-    lock::SleepExt,
     page::{
         map,
         virt_to_phys,
@@ -78,7 +77,6 @@ use crate::{
         set_sleeping,
         set_waiting,
         PROCESS_LIST,
-        PROCESS_LIST_MUTEX,
     },
     virtio::{
         block::block_op,
@@ -475,12 +473,12 @@ fn exec_func(args: usize) {
         } else {
             // If we hold this lock, we can still be preempted, but the scheduler will
             // return control to us. This required us to use try_lock in the scheduler.
-            PROCESS_LIST_MUTEX.sleep_lock();
-            if let Some(mut proc_list) = PROCESS_LIST.take() {
+            PROCESS_LIST.sleep_lock();
+            if let Some(mut proc_list) = PROCESS_LIST.inner_mutex.get_mut().take() {
                 proc_list.push_back(proc.ok().unwrap());
-                PROCESS_LIST.replace(proc_list);
+                PROCESS_LIST.inner_mutex.get_mut().replace(proc_list);
             }
-            PROCESS_LIST_MUTEX.force_unlock();
+            PROCESS_LIST.inner_mutex.force_unlock();
         }
     }
 }

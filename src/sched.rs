@@ -3,7 +3,6 @@ use crate::{
     process::{
         ProcessState,
         PROCESS_LIST,
-        PROCESS_LIST_MUTEX,
     },
 };
 
@@ -13,10 +12,10 @@ pub fn schedule() -> usize {
         // If we can't get the lock, then usually this means a kernel
         // process has the lock. So, we return 0. This has a special
         // meaning to whomever calls the scheduler to say "nobody else got scheduled"
-        if let None = PROCESS_LIST_MUTEX.try_lock() {
+        if let None = PROCESS_LIST.inner_mutex.try_lock() {
             return 0;
         }
-        if let Some(mut pl) = PROCESS_LIST.take() {
+        if let Some(mut pl) = PROCESS_LIST.inner_mutex.get_mut().take() {
             // Rust allows us to label loops so that break statements can be
             // targeted.
             'procfindloop: loop {
@@ -40,11 +39,11 @@ pub fn schedule() -> usize {
                     }
                 }
             }
-            PROCESS_LIST.replace(pl);
+            PROCESS_LIST.inner_mutex.get_mut().replace(pl);
         } else {
             println!("could not take process list");
         }
-        PROCESS_LIST_MUTEX.force_unlock();
+        PROCESS_LIST.inner_mutex.force_unlock();
     }
     frame_addr
 }
