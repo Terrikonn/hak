@@ -11,10 +11,12 @@
     flake-utils.lib.eachDefaultSystem (
       system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          overlays = [ (import rust-overlay) ];
+          pkgs = import nixpkgs {
+            inherit system overlays;
+          };
         in
           {
-            nixpkgs.overlays = [ rust-overlay.overlay ];
             devShell = pkgs.mkShell {
               buildInputs = with pkgs; [
                 openssl
