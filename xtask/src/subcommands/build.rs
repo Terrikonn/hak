@@ -26,7 +26,7 @@ pub struct Build {
 
 impl Build {
     pub fn execute(&self) -> Result<()> {
-        let optional_release = if self.release { " --release" } else { "" };
+        let optional_release = if self.release { Some("--release") } else { None };
         let target = self.target.to_string();
         // TODO: rewrite without hardcoding and unwraps :)
         let rust_flags = format!(
@@ -40,6 +40,6 @@ impl Build {
         );
         let _e = pushenv("RUSTFLAGS", rust_flags);
 
-        cmd!("cargo build --package hak --target {target}{optional_release}").run()
+        cmd!("cargo build --package hak --target {target} {optional_release...}").run()
     }
 }
