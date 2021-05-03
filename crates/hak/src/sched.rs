@@ -1,5 +1,5 @@
 use crate::{
-    cpu::get_mtime,
+    cpu,
     process::{
         ProcessState,
         PROCESS_LIST,
@@ -30,7 +30,7 @@ pub fn schedule() -> usize {
                         ProcessState::Sleeping => {
                             // Awaken sleeping processes whose sleep until is in
                             // the past.
-                            if prc.get_sleep_until() <= get_mtime() {
+                            if prc.get_sleep_until() <= cpu::MTime::get() {
                                 prc.set_state(ProcessState::Running);
                                 frame_addr = prc.get_frame_address();
                                 break 'procfindloop;

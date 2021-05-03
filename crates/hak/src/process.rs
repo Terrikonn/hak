@@ -9,9 +9,7 @@ use core::ptr::null_mut;
 
 use crate::{
     cpu::{
-        build_satp,
-        get_mtime,
-        satp_fence_asid,
+        self,
         CpuMode,
         Registers,
         SatpMode,
@@ -121,7 +119,7 @@ pub fn set_sleeping(pid: u16, duration: usize) -> bool {
             for proc in &mut pl {
                 if proc.pid == pid {
                     proc.set_state(ProcessState::Sleeping);
-                    proc.set_sleep_until(get_mtime() + duration);
+                    proc.set_sleep_until(cpu::MTime::get() + duration);
                     retval = true;
                     break;
                 }
@@ -275,8 +273,8 @@ pub fn add_kernel_process(func: fn()) -> u16 {
         // 1 is the return address register. This makes it so we
         // don't have to do syscall_exit() when a kernel process
         // finishes.
-        (*ret_proc.frame).regs[Registers::Ra as usize] = ra_delete_proc as usize;
-        (*ret_proc.frame).regs[Registers::Sp as usize] = ret_proc.stack as usize + STACK_PAGES * 4096;
+        (*ret_proc.frame).regs.ra = ra_delete_proc as usize;
+        (*ret_proc.frame).regs.sp = ret_proc.stack as usize + STACK_PAGES * 4096;
         (*ret_proc.frame).mode = CpuMode::Machine as usize;
         (*ret_proc.frame).pid = ret_proc.pid as usize;
     }
@@ -362,12 +360,12 @@ pub fn add_kernel_process_args(func: fn(args_ptr: usize), args: usize) -> u16 {
         // bottom of the memory and far away from heap allocations.
         unsafe {
             (*ret_proc.frame).pc = func_v_addr;
-            (*ret_proc.frame).regs[Registers::A0 as usize] = args;
+            (*ret_proc.frame).regs.a0 = args;
             // 1 is the return address register. This makes it so we
             // don't have to do syscall_exit() when a kernel process
             // finishes.
-            (*ret_proc.frame).regs[Registers::Ra as usize] = ra_delete_proc as usize;
-            (*ret_proc.frame).regs[Registers::Sp as usize] = ret_proc.stack as usize + STACK_PAGES * 4096;
+            (*ret_proc.frame).regs.ra = ra_delete_proc as usize;
+            (*ret_proc.frame).regs.sp = ret_proc.stack as usize + STACK_PAGES * 4096;
             (*ret_proc.frame).mode = CpuMode::Machine as usize;
             (*ret_proc.frame).pid = ret_proc.pid as usize;
         }
@@ -515,7 +513,7 @@ impl Process {
             program: null_mut(),
         };
         unsafe {
-            satp_fence_asid(NEXT_PID as usize);
+            cpu::Satp::fence_asid(NEXT_PID as usize);
             NEXT_PID += 1;
         }
         // Now we move the stack pointer to the bottom of the
@@ -529,7 +527,7 @@ impl Process {
         let s_addr = ret_proc.stack as usize;
         unsafe {
             (*ret_proc.frame).pc = func_v_addr;
-            (*ret_proc.frame).regs[Registers::Sp as usize] = STACK_ADDR + PAGE_SIZE * STACK_PAGES;
+            (*ret_proc.frame).regs.sp = STACK_ADDR + PAGE_SIZE * STACK_PAGES;
             (*ret_proc.frame).mode = CpuMode::User as usize;
             (*ret_proc.frame).pid = ret_proc.pid as usize;
         }
@@ -537,7 +535,7 @@ impl Process {
         let pt;
         unsafe {
             pt = &mut *ret_proc.root;
-            (*ret_proc.frame).satp = build_satp(SatpMode::Sv39, ret_proc.pid as usize, ret_proc.root as usize);
+            (*ret_proc.frame).satp = cpu::Satp::build(SatpMode::Sv39, ret_proc.pid as usize, ret_proc.root as usize);
         }
         // We need to map the stack onto the user process' virtual
         // memory This gets a little hairy because we need to also map

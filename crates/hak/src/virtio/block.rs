@@ -197,7 +197,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
         ptr.add(MmioOffsets::Status.scale32())
             .write_volatile(StatusField::Failed.val32());
         return false;
-    }    // 7. Perform device-specific setup.
+    } // 7. Perform device-specific setup.
     // Set the queue num. We have to make sure that the
     // queue size is valid because the device can only take
     // a certain size.
@@ -207,7 +207,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     if VIRTIO_RING_SIZE as u32 > qnmax {
         print!("queue size fail...");
         return false;
-    }    // First, if the block device array is empty, create it!
+    } // First, if the block device array is empty, create it!
     // We add 4095 to round this up and then do an integer
     // divide to truncate the decimal. We don't add 4096,
     // because if it is exactly 4096 bytes, we would get two
@@ -384,7 +384,7 @@ pub fn pending(bd: &mut BlockDevice) {
             if pid_of_watcher > 0 {
                 set_running(pid_of_watcher);
                 let proc = get_by_pid(pid_of_watcher);
-                (*(*proc).get_frame_mut()).regs[10] = (*rq).status.status as usize;
+                (*(*proc).get_frame_mut()).regs.s0 = (*rq).status.status as usize;
                 // TODO: Set GpA0 to the value of the return
                 // status.
             }
