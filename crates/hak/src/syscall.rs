@@ -58,7 +58,6 @@ use crate::{
     buffer::Buffer,
     cpu::{
         dump_registers,
-        Registers,
         TrapFrame,
     },
     elf,

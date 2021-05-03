@@ -11,7 +11,6 @@ use crate::{
     cpu::{
         self,
         CpuMode,
-        Registers,
         SatpMode,
         TrapFrame,
     },

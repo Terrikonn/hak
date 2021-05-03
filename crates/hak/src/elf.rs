@@ -6,7 +6,6 @@ use crate::{
         self,
         memcpy,
         CpuMode,
-        Registers,
         SatpMode,
         TrapFrame,
     },

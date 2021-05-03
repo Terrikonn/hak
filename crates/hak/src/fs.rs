@@ -7,10 +7,7 @@ use core::mem::size_of;
 
 use crate::{
     buffer::Buffer,
-    cpu::{
-        memcpy,
-        Registers,
-    },
+    cpu::memcpy,
     process::{
         add_kernel_process_args,
         get_by_pid,
