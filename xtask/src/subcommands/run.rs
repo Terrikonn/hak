@@ -39,7 +39,6 @@ pub struct Run {
 }
 
 impl Run {
-    #[rustfmt::skip]
     pub fn execute(&self) -> Result<()> {
         let build = Build {
             target: self.target.clone(),
@@ -57,7 +56,27 @@ impl Run {
         let path_to_hdd = path_to_hdd.into_os_string().into_string().unwrap();
         let path_to_kernel = path_to_kernel.into_os_string().into_string().unwrap();
 
-        cmd!("qemu-system-riscv64 -machine virt -cpu rv64 -smp 4 -m 128M -drive if=none,format=raw,file={path_to_hdd}/hdd.dsk,id=foo -device virtio-blk-device,scsi=off,drive=foo -nographic -serial mon:stdio -bios none -device virtio-rng-device -device virtio-gpu-device -device virtio-net-device -device virtio-tablet-device -device virtio-keyboard-device -kernel {path_to_kernel}").run()
+        cmd!(
+            "
+            qemu-system-riscv64
+                -machine virt
+                -cpu rv64
+                -smp 4
+                -m 128M
+                -drive if=none,format=raw,file={path_to_hdd}/hdd.dsk,id=foo
+                -device virtio-blk-device,scsi=off,drive=foo
+                -nographic
+                -serial mon:stdio
+                -bios none
+                -device virtio-rng-device
+                -device virtio-gpu-device
+                -device virtio-net-device
+                -device virtio-tablet-device
+                -device virtio-keyboard-device
+                -kernel {path_to_kernel}
+        "
+        )
+        .run()
 
         // let runner = &self.get_default_runner();
         // cmd!("{runner}").run()
