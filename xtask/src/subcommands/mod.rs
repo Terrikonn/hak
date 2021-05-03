@@ -4,10 +4,14 @@ use clap::Clap;
 use xshell::Result;
 
 pub mod build;
+pub mod check;
 pub mod run;
 
 #[derive(Clap, Debug)]
 pub enum Command {
+    /// Check kernel for compilation errors
+    #[clap(alias = "c")]
+    Check(check::Check),
     /// Build kernel
     #[clap(alias = "b")]
     Build(build::Build),
@@ -21,6 +25,7 @@ pub enum Command {
 impl Command {
     pub fn execute(&self) -> Result<()> {
         match self {
+            Self::Check(check) => check.execute(),
             Self::Build(build) => build.execute(),
             Self::Run(run) => run.execute(),
         }
