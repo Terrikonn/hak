@@ -3,11 +3,13 @@ use alloc::{
     collections::BTreeMap,
     string::String,
 };
-use core::mem::size_of;
+use core::{
+    intrinsics::copy_nonoverlapping,
+    mem::size_of,
+};
 
 use crate::{
     buffer::Buffer,
-    cpu::memcpy,
     process::{
         add_kernel_process_args,
         get_by_pid,
@@ -290,12 +292,11 @@ impl MinixFileSystem {
                 } else {
                     BLOCK_SIZE - offset_byte
                 };
-                // Once again, here we actually copy the bytes into the final destination, the buffer. This memcpy
-                // is written in cpu.rs.
+                // Once again, here we actually copy the bytes into the final destination, the buffer.
                 unsafe {
-                    memcpy(
-                        buffer.add(bytes_read as usize),
+                    copy_nonoverlapping(
                         block_buffer.get().add(offset_byte as usize),
+                        buffer.add(bytes_read as usize),
                         read_this_many as usize,
                     );
                 }
@@ -325,7 +326,8 @@ impl MinixFileSystem {
             syc_read(bdev, indirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * inode.zones[7]);
             let izones = indirect_buffer.get() as *const u32;
             for i in 0..NUM_IPTRS {
-                // Where do I put unsafe? Dereferencing the pointers and memcpy are the unsafe functions.
+                // Where do I put unsafe? Dereferencing the pointers and copy_nonoverlapping are the unsafe
+                // functions.
                 unsafe {
                     if izones.add(i).read() != 0 {
                         if offset_block <= blocks_seen {
@@ -340,9 +342,9 @@ impl MinixFileSystem {
                             } else {
                                 BLOCK_SIZE - offset_byte
                             };
-                            memcpy(
-                                buffer.add(bytes_read as usize),
+                            copy_nonoverlapping(
                                 block_buffer.get().add(offset_byte as usize),
+                                buffer.add(bytes_read as usize),
                                 read_this_many as usize,
                             );
                             bytes_read += read_this_many;
@@ -388,9 +390,9 @@ impl MinixFileSystem {
                                     } else {
                                         BLOCK_SIZE - offset_byte
                                     };
-                                    memcpy(
-                                        buffer.add(bytes_read as usize),
+                                    copy_nonoverlapping(
                                         block_buffer.get().add(offset_byte as usize),
+                                        buffer.add(bytes_read as usize),
                                         read_this_many as usize,
                                     );
                                     bytes_read += read_this_many;
@@ -444,9 +446,9 @@ impl MinixFileSystem {
                                             } else {
                                                 BLOCK_SIZE - offset_byte
                                             };
-                                            memcpy(
-                                                buffer.add(bytes_read as usize),
+                                            copy_nonoverlapping(
                                                 block_buffer.get().add(offset_byte as usize),
+                                                buffer.add(bytes_read as usize),
                                                 read_this_many as usize,
                                             );
                                             bytes_read += read_this_many;

@@ -1,4 +1,5 @@
 use core::{
+    intrinsics::copy_nonoverlapping,
     ops::{
         Index,
         IndexMut,
@@ -6,12 +7,9 @@ use core::{
     ptr::null_mut,
 };
 
-use crate::{
-    cpu::memcpy,
-    kmem::{
-        kfree,
-        kmalloc,
-    },
+use crate::kmem::{
+    kfree,
+    kmalloc,
 };
 // We need a Buffer that can automatically be created and destroyed
 // in the lifetime of our read and write functions. In C, this would entail
@@ -70,7 +68,7 @@ impl Clone for Buffer {
             len: self.len(),
         };
         unsafe {
-            memcpy(new.get_mut(), self.get(), self.len());
+            copy_nonoverlapping(self.get(), new.get_mut(), self.len());
         }
         new
     }

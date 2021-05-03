@@ -1,10 +1,10 @@
 use alloc::collections::VecDeque;
+use core::intrinsics::copy_nonoverlapping;
 
 use crate::{
     buffer::Buffer,
     cpu::{
         self,
-        memcpy,
         CpuMode,
         SatpMode,
         TrapFrame,
@@ -142,7 +142,7 @@ impl File {
                 }
                 let mut ph_buffer = Buffer::new(ph.memsz);
 
-                memcpy(ph_buffer.get_mut(), buffer.get().add(ph.off), ph.memsz);
+                copy_nonoverlapping(buffer.get().add(ph.off), ph_buffer.get_mut(), ph.memsz);
                 ret.programs.push_back(Program {
                     header: *ph,
                     data: ph_buffer,
@@ -199,7 +199,7 @@ impl File {
             // program header tells us how many bytes will need to be loaded.
             // The ph.off is the offset to load this into.
             unsafe {
-                memcpy(program_mem.add(p.header.off), p.data.get(), p.header.memsz);
+                copy_nonoverlapping(p.data.get(), program_mem.add(p.header.off), p.header.memsz);
             }
             // We start off with the user bit set.
             let mut bits = EntryBits::User.val();

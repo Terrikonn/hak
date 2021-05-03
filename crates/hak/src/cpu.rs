@@ -482,13 +482,6 @@ impl MTime {
     }
 }
 
-/// Copy one data from one memory location to another.
-pub unsafe fn memcpy(dest: *mut u8, src: *const u8, bytes: usize) {
-    for i in 0..bytes {
-        dest.add(i).write(src.add(i).read());
-    }
-}
-
 /// Dumps the registers of a given [`TrapFrame`]. This is NOT the current CPU registers!
 pub fn dump_registers(frame: *const TrapFrame) {
     print!("   ");
