@@ -27,31 +27,31 @@ const PLIC_CLAIM: usize = 0x0c20_0004;
 /// ID of the interrupt. For example, if the UART is interrupting
 /// and it's next, we will get the value 10.
 pub fn next() -> Option<u32> {
-    let claim_reg = PLIC_CLAIM as *const u32;
-    let claim_no;
+    let claim_register = PLIC_CLAIM as *const u32;
+    let claim_number;
     // The claim register is filled with the highest-priority, enabled interrupt.
     unsafe {
-        claim_no = claim_reg.read_volatile();
+        claim_number = claim_register.read_volatile();
     }
-    if claim_no == 0 {
+    if claim_number == 0 {
         // The interrupt 0 is hardwired to 0, which tells us that there is no
         // interrupt to claim, hence we return None.
         None
     } else {
         // If we get here, we've gotten a non-0 interrupt.
-        Some(claim_no)
+        Some(claim_number)
     }
 }
 
 /// Complete a pending interrupt by id. The id should come
 /// from the next() function above.
 pub fn complete(id: u32) {
-    let complete_reg = PLIC_CLAIM as *mut u32;
+    let complete_register = PLIC_CLAIM as *mut u32;
     unsafe {
         // We actually write a u32 into the entire complete_register.
         // This is the same register as the claim register, but it can
         // differentiate based on whether we're reading or writing.
-        complete_reg.write_volatile(id);
+        complete_register.write_volatile(id);
     }
 }
 
@@ -63,22 +63,22 @@ pub fn set_threshold(tsh: u8) {
     // We do tsh because we're using a u8, but our maximum number
     // is a 3-bit 0b111. So, we and with 7 (0b111) to just get the
     // last three bits.
-    let actual_tsh = tsh & 0b111;
-    let tsh_reg = PLIC_THRESHOLD as *mut u32;
+    let actual_threshold = tsh & 0b111;
+    let threshold_register = PLIC_THRESHOLD as *mut u32;
     unsafe {
-        tsh_reg.write_volatile(actual_tsh as u32);
+        threshold_register.write_volatile(actual_threshold as u32);
     }
 }
 
 /// See if a given interrupt id is pending.
 pub fn is_pending(id: u32) -> bool {
-    let pend = PLIC_PENDING as *const u32;
+    let pending = PLIC_PENDING as *const u32;
     let actual_id = 1 << id;
-    let pend_ids;
+    let pending_ids;
     unsafe {
-        pend_ids = pend.read_volatile();
+        pending_ids = pending.read_volatile();
     }
-    actual_id & pend_ids != 0
+    actual_id & pending_ids != 0
 }
 
 /// Enable a given interrupt id
@@ -96,15 +96,15 @@ pub fn enable(id: u32) {
 
 /// Set a given interrupt priority to the given priority.
 /// The priority must be [0..7]
-pub fn set_priority(id: u32, prio: u8) {
-    let actual_prio = prio as u32 & 7;
-    let prio_reg = PLIC_PRIORITY as *mut u32;
+pub fn set_priority(id: u32, priority: u8) {
+    let actual_priority = priority as u32 & 7;
+    let priority_register = PLIC_PRIORITY as *mut u32;
     unsafe {
         // The offset for the interrupt id is:
         // PLIC_PRIORITY + 4 * id
         // Since we're using pointer arithmetic on a u32 type,
         // it will automatically multiply the id by 4.
-        prio_reg.add(id as usize).write_volatile(actual_prio);
+        priority_register.add(id as usize).write_volatile(actual_priority);
     }
 }
 
