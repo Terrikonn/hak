@@ -23,7 +23,8 @@ fallocate -l 32M hdd.dsk
 ```
 
 ## Running
-To run, you should use our custom build system that corresponds [xtask](https://github.com/matklad/cargo-xtask) specification.
+You should use our custom build system that corresponds [xtask](https://github.com/matklad/cargo-xtask) specification.
+To see all available commands type `cargo xtask --help`
 
 # License
 The source code in this project is licensed under the GNU General Public License v3.0
