@@ -64,14 +64,16 @@ pub static mut NEXT_PID: u16 = 1;
 pub fn set_running(pid: u16) -> bool {
     // Yes, this is O(n). A better idea here would be a static list
     // of process pointers.
-    let mut retval = false;
     unsafe {
         if let Some(mut pl) = PROCESS_LIST.take() {
             for proc in &mut pl {
                 if proc.pid == pid {
                     proc.set_state(ProcessState::Running);
-                    retval = true;
-                    break;
+                    // Now, we no longer need the owned Deque, so we hand it
+                    // back by replacing the PROCESS_LIST's None with the
+                    // Some(pl).
+                    PROCESS_LIST.replace(pl);
+                    return true;
                 }
             }
             // Now, we no longer need the owned Deque, so we hand it
@@ -80,7 +82,7 @@ pub fn set_running(pid: u16) -> bool {
             PROCESS_LIST.replace(pl);
         }
     }
-    retval
+    false
 }
 
 /// Set a process' state to waiting. This doesn't do any checks.
@@ -89,14 +91,16 @@ pub fn set_running(pid: u16) -> bool {
 pub fn set_waiting(pid: u16) -> bool {
     // Yes, this is O(n). A better idea here would be a static list
     // of process pointers.
-    let mut retval = false;
     unsafe {
         if let Some(mut pl) = PROCESS_LIST.take() {
             for proc in pl.iter_mut() {
                 if proc.pid == pid {
                     proc.set_state(ProcessState::Waiting);
-                    retval = true;
-                    break;
+                    // Now, we no longer need the owned Deque, so we hand it
+                    // back by replacing the PROCESS_LIST's None with the
+                    // Some(pl).
+                    PROCESS_LIST.replace(pl);
+                    return true;
                 }
             }
             // Now, we no longer need the owned Deque, so we hand it
@@ -105,22 +109,24 @@ pub fn set_waiting(pid: u16) -> bool {
             PROCESS_LIST.replace(pl);
         }
     }
-    retval
+    false
 }
 
 /// Sleep a process
 pub fn set_sleeping(pid: u16, duration: usize) -> bool {
     // Yes, this is O(n). A better idea here would be a static list
     // of process pointers.
-    let mut retval = false;
     unsafe {
         if let Some(mut pl) = PROCESS_LIST.take() {
             for proc in &mut pl {
                 if proc.pid == pid {
                     proc.set_state(ProcessState::Sleeping);
                     proc.set_sleep_until(cpu::MTime::get() + duration);
-                    retval = true;
-                    break;
+                    // Now, we no longer need the owned Deque, so we hand it
+                    // back by replacing the PROCESS_LIST's None with the
+                    // Some(pl).
+                    PROCESS_LIST.replace(pl);
+                    return true;
                 }
             }
             // Now, we no longer need the owned Deque, so we hand it
@@ -129,7 +135,7 @@ pub fn set_sleeping(pid: u16, duration: usize) -> bool {
             PROCESS_LIST.replace(pl);
         }
     }
-    retval
+    false
 }
 
 /// Delete a process given by pid. If this process doesn't exist,
@@ -606,9 +612,6 @@ pub struct ProcessData {
 // is a per-process block queuing algorithm, we can put that here.
 impl ProcessData {
     pub fn new() -> Self {
-        // ProcessData {
-        //     ..Default::default()
-        // }
         Self::default()
     }
 }
