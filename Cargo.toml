@@ -3,6 +3,7 @@ members = [
     "crates/hak",
     "crates/bootloader",
     "crates/arch/riscv",
+    "crates/klog",
     "xtask",
 ]
 
