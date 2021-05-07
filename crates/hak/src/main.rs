@@ -118,6 +118,19 @@ extern "C" fn kinit() {
     virtio::probe();
     // Test the block driver!
     process::add_kernel_process(test::test);
+    /* TEST */
+    let collector = klog::KernelSubscriber::new(uart::Uart::new(0x1000_0000),2);
+    tracing::subscriber::set_global_default(collector).unwrap();
+    use tracing::{span, Level, info};
+    
+    let app_span = span!(Level::TRACE, "", version = %5.0);
+    let _e = app_span.enter();
+
+    let server_span = span!(Level::TRACE, "server", host = "localhost", port = 8080);
+    let _e2 = server_span.enter();
+    info!("starting");
+    info!("listening");
+    /* TEST */
     // Get the GPU going
     virtio::gpu::init(6);
     // We schedule the next context switch using a multiplier of 1
