@@ -1,7 +1,6 @@
-use crate::{
-    uart::Uart,
-    virtio,
-};
+use uart::uart::Uart;
+
+use crate::virtio;
 
 const PLIC_PRIORITY: usize = 0x0c00_0000;
 const PLIC_PENDING: usize = 0x0c00_1000;
@@ -125,7 +124,7 @@ pub fn handle_interrupt() {
                 // just simply wraps 0x1000_0000 (UART).
                 let mut my_uart = Uart::new(0x1000_0000);
                 // If we get here, the UART better have something! If not, what happened??
-                if let Some(c) = my_uart.get() {
+                if let Some(c) = my_uart.receive() {
                     // If you recognize this code, it used to be in the lib.rs under kmain(). That
                     // was because we needed to poll for UART data. Now that we have interrupts,
                     // here it goes!
