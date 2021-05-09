@@ -21,6 +21,10 @@
     clippy::cargo
 )]
 
+#[macro_use]
+extern crate tracing;
+use tracing::Level;
+
 // #[macro_use]
 extern crate alloc;
 // This is experimental and requires alloc_prelude as a feature
@@ -34,7 +38,7 @@ extern crate alloc;
 macro_rules! print {
     ($($args:tt)+) => ({
         use core::fmt::Write;
-        let _ = write!(crate::uart::Uart::new(0x1000_0000), $($args)+);
+        let _ = write!(uart::uart::Uart::new(0x1000_0000), $($args)+);
     });
 }
 
@@ -99,9 +103,15 @@ fn rust_switch_to_user(frame: usize) -> ! {
 /// Kernel entry point
 #[no_mangle]
 extern "C" fn kinit() {
-    uart::Uart::new(0x1000_0000).init();
+    uart::uart::Uart::new(0x1000_0000).init();
+
     page::init();
     kmem::init();
+    let collector = klog::KernelSubscriber::new(uart::uart::Uart::new(0x1000_0000), 2);
+    tracing::subscriber::set_global_default(collector).unwrap();
+
+    let server_span = span!(Level::TRACE, "kernel", host = "qemu-riscv");
+    let _e2 = server_span.enter();
     process::init();
     // We lower the threshold wall so our interrupts can jump over it.
     // Any priority > 0 will be able to be "heard"
@@ -118,19 +128,8 @@ extern "C" fn kinit() {
     virtio::probe();
     // Test the block driver!
     process::add_kernel_process(test::test);
-    /* TEST */
-    let collector = klog::KernelSubscriber::new(uart::Uart::new(0x1000_0000),2);
-    tracing::subscriber::set_global_default(collector).unwrap();
-    use tracing::{span, Level, info};
-    
-    let app_span = span!(Level::TRACE, "", version = %5.0);
-    let _e = app_span.enter();
 
-    let server_span = span!(Level::TRACE, "server", host = "localhost", port = 8080);
-    let _e2 = server_span.enter();
-    info!("starting");
-    info!("listening");
-    /* TEST */
+    info!("starting gpu initialization...");
     // Get the GPU going
     virtio::gpu::init(6);
     // We schedule the next context switch using a multiplier of 1
@@ -175,7 +174,7 @@ pub mod syscall;
 pub mod test;
 /// Trampoline for interrupts
 pub mod trap;
-/// Universal Asynchronous Receiver-Transmitter
-pub mod uart;
+// /// Universal Asynchronous Receiver-Transmitter
+// pub mod uart;
 /// Virtual input/output protocol
 pub mod virtio;
