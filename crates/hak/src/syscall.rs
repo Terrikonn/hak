@@ -93,6 +93,7 @@ use crate::{
 
 /// Contain all supported system calls
 #[repr(usize)]
+#[non_exhaustive]
 pub enum Syscall {
     PutChar = 2,
     DumpRegisters = 8,
