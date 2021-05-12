@@ -1,9 +1,23 @@
+
+[package]
+name = "hak"
+version = "0.1.0"
+authors = ["remimimimi <valent.xarin@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+klog = { path = "klog" }
+uart = { path = "../drivers/uart/" }
+tracing = { version = "0.1.26", default-features = false }
+
+[target.riscv64gc-unknown-none-elf.dependencies]
+riscv = { path = "arch/riscv" }
+
 [workspace]
 members = [
-    "crates/hak",
-    "crates/bootloader",
-    "crates/arch/riscv",
-    "crates/klog",
+    "bootloader",
+    "arch/riscv",
+    "klog",
     "xtask",
 ]
 

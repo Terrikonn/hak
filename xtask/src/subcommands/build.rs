@@ -30,7 +30,7 @@ impl Build {
         let target = self.target.to_string();
         // TODO: rewrite without hardcoding and unwraps :)
         let rust_flags = format!(
-            "-C link-arg=-T{}/crates/hak/src/lds/virt.lds",
+            "-C link-arg=-T{}/src/lds/virt.lds",
             try_find_path_to_terrikon_hak()
                 .unwrap()
                 .as_os_str()
