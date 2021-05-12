@@ -1,5 +1,5 @@
 use alloc::collections::VecDeque;
-use core::intrinsics::copy_nonoverlapping;
+use core::ptr::copy_nonoverlapping;
 
 use crate::{
     buffer::Buffer,

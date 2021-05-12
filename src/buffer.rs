@@ -1,10 +1,12 @@
 use core::{
-    intrinsics::copy_nonoverlapping,
     ops::{
         Index,
         IndexMut,
     },
-    ptr::null_mut,
+    ptr::{
+        copy_nonoverlapping,
+        null_mut,
+    },
 };
 
 use crate::kmem::{

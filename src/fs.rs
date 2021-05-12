@@ -4,8 +4,8 @@ use alloc::{
     string::String,
 };
 use core::{
-    intrinsics::copy_nonoverlapping,
     mem::size_of,
+    ptr::copy_nonoverlapping,
 };
 
 use crate::{
