@@ -2,6 +2,8 @@ use core::mem::size_of;
 
 use crate::{
     page::PAGE_SIZE,
+    serial_print,
+    serial_println,
     virtio::{
         block::setup_block_device,
         gpu::setup_gpu_device,
@@ -244,7 +246,7 @@ pub fn probe() {
     // modifier to change how much it steps. Also recall that ..= means up
     // to AND including MMIO_VIRTIO_END.
     for addr in (MMIO_VIRTIO_START..=MMIO_VIRTIO_END).step_by(MMIO_VIRTIO_STRIDE) {
-        print!("Virtio probing 0x{:08x}...", addr);
+        serial_print!("Virtio probing 0x{:08x}...", addr);
         let magicvalue;
         let deviceid;
         let ptr = addr as *mut u32;
@@ -256,14 +258,14 @@ pub fn probe() {
         // it is triv. All VirtIO devices have this attached to the
         // MagicValue register (offset 0x000)
         if MMIO_VIRTIO_MAGIC != magicvalue {
-            println!("not virtio.");
+            serial_println!("not virtio.");
         }
         // If we are a virtio device, we now need to see if anything
         // is actually attached to it. The DeviceID register will
         // contain what type of device this is. If this value is 0,
         // then it is not connected.
         else if 0 == deviceid {
-            println!("not connected.");
+            serial_println!("not connected.");
         }
         // If we get here, we have a connected virtio device. Now we have
         // to figure out what kind it is so we can do device-specific setup.
@@ -271,62 +273,62 @@ pub fn probe() {
             match deviceid {
                 // DeviceID 1 is a network device
                 1 => {
-                    print!("network device...");
+                    serial_print!("network device...");
                     if setup_network_device(ptr) {
-                        println!("setup succeeded!");
+                        serial_println!("setup succeeded!");
                     } else {
-                        println!("setup failed.");
+                        serial_println!("setup failed.");
                     }
                 },
                 // DeviceID 2 is a block device
                 2 => {
-                    print!("block device...");
+                    serial_print!("block device...");
                     if unsafe { setup_block_device(ptr) } {
                         let idx = (addr - MMIO_VIRTIO_START) >> 12;
                         unsafe {
                             VIRTIO_DEVICES[idx] = Some(VirtioDevice::new_with(DeviceTypes::Block));
                         }
-                        println!("setup succeeded!");
+                        serial_println!("setup succeeded!");
                     } else {
-                        println!("setup failed.");
+                        serial_println!("setup failed.");
                     }
                 },
                 // DeviceID 4 is a random number generator device
                 4 => {
-                    print!("entropy device...");
+                    serial_print!("entropy device...");
                     if unsafe { setup_entropy_device(ptr) } {
-                        println!("setup succeeded!");
+                        serial_println!("setup succeeded!");
                     } else {
-                        println!("setup failed.");
+                        serial_println!("setup failed.");
                     }
                 },
                 // DeviceID 16 is a GPU device
                 16 => {
-                    print!("GPU device...");
+                    serial_print!("GPU device...");
                     if unsafe { setup_gpu_device(ptr) } {
                         let idx = (addr - MMIO_VIRTIO_START) >> 12;
                         unsafe {
                             VIRTIO_DEVICES[idx] = Some(VirtioDevice::new_with(DeviceTypes::Gpu));
                         }
-                        println!("setup succeeded!");
+                        serial_println!("setup succeeded!");
                     } else {
-                        println!("setup failed.");
+                        serial_println!("setup failed.");
                     }
                 },
                 // DeviceID 18 is an input device
                 18 => {
-                    print!("input device...");
+                    serial_print!("input device...");
                     if unsafe { setup_input_device(ptr) } {
                         let idx = (addr - MMIO_VIRTIO_START) >> 12;
                         unsafe {
                             VIRTIO_DEVICES[idx] = Some(VirtioDevice::new_with(DeviceTypes::Input));
                         }
-                        println!("setup succeeded!");
+                        serial_println!("setup succeeded!");
                     } else {
-                        println!("setup failed.");
+                        serial_println!("setup failed.");
                     }
                 },
-                _ => println!("unknown device type."),
+                _ => serial_println!("unknown device type."),
             }
         }
     }
@@ -356,11 +358,11 @@ pub fn handle_interrupt(interrupt: u32) {
                     input::handle_interrupt(idx);
                 },
                 _ => {
-                    println!("Invalid device generated interrupt!");
+                    serial_println!("Invalid device generated interrupt!");
                 },
             }
         } else {
-            println!("Spurious interrupt {}", interrupt);
+            serial_println!("Spurious interrupt {}", interrupt);
         }
     }
 }

@@ -13,6 +13,8 @@ use crate::{
         zalloc,
         PAGE_SIZE,
     },
+    serial_print,
+    serial_println,
     virtio,
     virtio::{
         Descriptor,
@@ -639,7 +641,7 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        print!("features fail...");
+        serial_print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32())
             .write_volatile(StatusField::Failed.val32());
         return false;
@@ -652,7 +654,7 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::QueueNum.scale32())
         .write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        print!("queue size fail...");
+        serial_print!("queue size fail...");
         return false;
     }
     // First, if the block device array is empty, create it!
@@ -661,7 +663,7 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     // because if it is exactly 4096 bytes, we would get two
     // pages, not one.
     let num_pages = (size_of::<Queue>() + PAGE_SIZE - 1) / PAGE_SIZE;
-    // println!("np = {}", num_pages);
+    // serial_println!("np = {}", num_pages);
     // We allocate a page for each device. This will the the
     // descriptor where we can communicate with the block
     // device. We will still use an MMIO register (in
@@ -720,7 +722,7 @@ pub fn pending(dev: &mut Device) {
         let queue = &(*dev.queue);
         while dev.ack_used_idx != queue.used.idx {
             let elem = &queue.used.ring[dev.ack_used_idx as usize % VIRTIO_RING_SIZE];
-            // println!("Ack {}, elem {}, len {}", dev.ack_used_idx, elem.id, elem.len);
+            // serial_println!("Ack {}, elem {}, len {}", dev.ack_used_idx, elem.id, elem.len);
             let desc = &queue.desc[elem.id as usize];
             // Requests stay resident on the heap until this
             // function, so we can recapture the address here
@@ -735,7 +737,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = GPU_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            println!("Invalid GPU device for interrupt {}", idx + 1);
+            serial_println!("Invalid GPU device for interrupt {}", idx + 1);
         }
     }
 }

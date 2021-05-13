@@ -1,6 +1,8 @@
-use uart::uart::Uart;
-
-use crate::virtio;
+use crate::{
+    serial_print,
+    serial_println,
+    virtio,
+};
 
 const PLIC_PRIORITY: usize = 0x0c00_0000;
 const PLIC_PENDING: usize = 0x0c00_1000;
@@ -122,31 +124,29 @@ pub fn handle_interrupt() {
                 // but we're testing here! C'mon!
                 // We haven't yet used the singleton pattern for my_uart, but remember, this
                 // just simply wraps 0x1000_0000 (UART).
-                let mut my_uart = Uart::new(0x1000_0000);
                 // If we get here, the UART better have something! If not, what happened??
-                if let Some(c) = my_uart.receive() {
-                    // If you recognize this code, it used to be in the lib.rs under kmain(). That
-                    // was because we needed to poll for UART data. Now that we have interrupts,
-                    // here it goes!
-                    match c {
-                        8 => {
-                            // This is a backspace, so we
-                            // essentially have to write a space and
-                            // backup again:
-                            print!("{} {}", 8 as char, 8 as char);
-                        },
-                        10 | 13 => {
-                            // Newline or carriage-return
-                            println!();
-                        },
-                        _ => {
-                            print!("{}", c as char);
-                        },
-                    }
+                let c = crate::serial::SERIAL1.lock().receive();
+                // If you recognize this code, it used to be in the lib.rs under kmain(). That
+                // was because we needed to poll for UART data. Now that we have interrupts,
+                // here it goes!
+                match c {
+                    8 => {
+                        // This is a backspace, so we
+                        // essentially have to write a space and
+                        // backup again:
+                        serial_print!("{} {}", 8 as char, 8 as char);
+                    },
+                    10 | 13 => {
+                        // Newline or carriage-return
+                        serial_println!();
+                    },
+                    _ => {
+                        serial_print!("{}", c as char);
+                    },
                 }
             },
             _ => {
-                println!("Unknown external interrupt: {}", interrupt);
+                serial_println!("Unknown external interrupt: {}", interrupt);
             },
         }
         // We've claimed it, so now say that we've handled it. This resets the interrupt pending

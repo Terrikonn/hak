@@ -78,6 +78,8 @@ use crate::{
         PROCESS_LIST,
         PROCESS_LIST_MUTEX,
     },
+    serial_print,
+    serial_println,
     virtio::{
         block::block_op,
         gpu,
@@ -163,7 +165,7 @@ pub unsafe fn do_syscall(mepc: usize, frame: *mut TrapFrame) -> usize {
     // A7 is X17, so it's register number 17.
     Syscall::try_from((*frame).regs.a7).map_or_else(
         |unexpected_syscall| {
-            println!("Unknown syscall number {}", unexpected_syscall);
+            serial_println!("Unknown syscall number {}", unexpected_syscall);
             0
         },
         |syscall| {
@@ -173,7 +175,7 @@ pub unsafe fn do_syscall(mepc: usize, frame: *mut TrapFrame) -> usize {
                     0
                 },
                 Syscall::PutChar => {
-                    print!("{}", (*frame).regs.a0 as u8 as char);
+                    serial_print!("{}", (*frame).regs.a0 as u8 as char);
                     0
                 },
                 Syscall::DumpRegisters => {
@@ -227,7 +229,7 @@ pub unsafe fn do_syscall(mepc: usize, frame: *mut TrapFrame) -> usize {
                     } else {
                         // If we get here, the path couldn't be found, or for some reason
                         // open failed. So, we return -1 and move on.
-                        println!("Could not open path '{}'.", path);
+                        serial_println!("Could not open path '{}'.", path);
                         (*frame).regs.a0 = usize::MAX;
                         mepc + 4
                     }
@@ -470,7 +472,7 @@ fn exec_func(args: usize) {
         // Now we have the data, so the following will load the ELF file and give us a process.
         let proc = elf::File::load_proc(&buffer);
         if proc.is_err() {
-            println!("Failed to launch process.");
+            serial_println!("Failed to launch process.");
         } else {
             // If we hold this lock, we can still be preempted, but the scheduler will
             // return control to us. This required us to use try_lock in the scheduler.

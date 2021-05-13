@@ -14,6 +14,7 @@ use crate::{
     process::delete_process,
     rust_switch_to_user,
     sched::schedule,
+    serial_println,
     syscall::do_syscall,
 };
 
@@ -61,7 +62,7 @@ extern "C" fn m_trap(
             3 => {
                 // We will use this to awaken our other CPUs so they can process
                 // processes.
-                println!("Machine software interrupt CPU #{}", hart);
+                serial_println!("Machine software interrupt CPU #{}", hart);
             },
             7 => {
                 // This is the context-switch timer.
@@ -76,7 +77,7 @@ extern "C" fn m_trap(
             },
             11 => {
                 // Machine external (interrupt from Platform Interrupt Controller (PLIC))
-                // println!("Machine external interrupt CPU#{}", hart);
+                // serial_println!("Machine external interrupt CPU#{}", hart);
                 // We will check the next interrupt. If the interrupt isn't available, this will
                 // give us None. However, that would mean we got a spurious interrupt, unless we
                 // get an interrupt from a non-PLIC source. This is the main reason that the PLIC
@@ -92,7 +93,7 @@ extern "C" fn m_trap(
         match cause_num {
             2 => unsafe {
                 // Illegal instruction
-                println!("Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n", hart, epc, tval);
+                serial_println!("Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n", hart, epc, tval);
                 // We need while trues here until we have a functioning "delete from scheduler"
                 // I use while true because Rust will warn us that it looks stupid.
                 // This is what I want so that I remember to remove this and replace
@@ -103,7 +104,7 @@ extern "C" fn m_trap(
                 rust_switch_to_user(frame);
             },
             7 => unsafe {
-                println!(
+                serial_println!(
                     "Error with pid {}, at PC 0x{:08x}, mepc 0x{:08x}",
                     (*frame).pid,
                     (*frame).pc,
@@ -116,7 +117,7 @@ extern "C" fn m_trap(
             },
             8 | 9 | 11 => unsafe {
                 // Environment (system) call from User, Supervisor, and Machine modes
-                // println!("E-call from User mode! CPU#{} -> 0x{:08x}", hart, epc);
+                // serial_println!("E-call from User mode! CPU#{} -> 0x{:08x}", hart, epc);
                 return_pc = do_syscall(return_pc, frame);
                 if return_pc == 0 {
                     // We are about to schedule something else here, so we need to store PAST
@@ -130,7 +131,7 @@ extern "C" fn m_trap(
             // Page faults
             12 => unsafe {
                 // Instruction page fault
-                println!("Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                serial_println!("Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -138,7 +139,7 @@ extern "C" fn m_trap(
             },
             13 => unsafe {
                 // Load page fault
-                println!("Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                serial_println!("Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -146,7 +147,7 @@ extern "C" fn m_trap(
             },
             15 => unsafe {
                 // Store page fault
-                println!("Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                serial_println!("Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);

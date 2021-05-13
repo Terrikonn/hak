@@ -1,5 +1,6 @@
 use crate::{
     fs::MinixFileSystem,
+    serial_println,
     syscall,
 };
 /// Test block will load raw binaries into memory to execute them. This function
@@ -10,5 +11,5 @@ pub fn test() {
     // let path = "/pong.elf\0".as_bytes().as_ptr();
     let path = b"/shell.elf\0".as_ptr();
     syscall::syscall_execv(path, 0);
-    println!("I should never get here, execv should destroy our process.");
+    serial_println!("I should never get here, execv should destroy our process.");
 }

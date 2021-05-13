@@ -16,6 +16,7 @@ use crate::{
         set_running,
         set_waiting,
     },
+    serial_println,
     syscall::syscall_block_read,
 };
 
@@ -189,7 +190,7 @@ impl MinixFileSystem {
                 MFS_INODE_CACHE[bdev - 1] = Some(btm);
             }
         } else {
-            println!("KERNEL: Initialized an already initialized filesystem {}", bdev);
+            serial_println!("KERNEL: Initialized an already initialized filesystem {}", bdev);
         }
     }
 
@@ -534,7 +535,7 @@ fn read_proc(args_addr: usize) {
 /// System calls will call process_read, which will spawn off a kernel process to read
 /// the requested data.
 pub fn process_read(pid: u16, dev: usize, node: u32, buffer: *mut u8, size: u32, offset: u32) {
-    // println!("FS read {}, {}, 0x{:x}, {}, {}", pid, dev, buffer as usize, size, offset);
+    // serial_println!("FS read {}, {}, 0x{:x}, {}, {}", pid, dev, buffer as usize, size, offset);
     let args = ProcArgs {
         pid,
         dev,

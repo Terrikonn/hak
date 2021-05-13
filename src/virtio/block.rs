@@ -16,6 +16,8 @@ use crate::{
         set_running,
         set_waiting,
     },
+    serial_print,
+    serial_println,
     virtio::{
         self,
         Descriptor,
@@ -193,7 +195,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        print!("features fail...");
+        serial_print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32())
             .write_volatile(StatusField::Failed.val32());
         return false;
@@ -205,7 +207,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::QueueNum.scale32())
         .write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        print!("queue size fail...");
+        serial_print!("queue size fail...");
         return false;
     } // First, if the block device array is empty, create it!
     // We add 4095 to round this up and then do an integer
@@ -213,7 +215,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // because if it is exactly 4096 bytes, we would get two
     // pages, not one.
     let num_pages = (size_of::<Queue>() + PAGE_SIZE - 1) / PAGE_SIZE;
-    // println!("np = {}", num_pages);
+    // serial_println!("np = {}", num_pages);
     // We allocate a page for each device. This will the the
     // descriptor where we can communicate with the block
     // device. We will still use an MMIO register (in
@@ -296,7 +298,7 @@ pub fn block_op(
             // Check to see if we are trying to write to a read only
             // device.
             if bdev.read_only && write {
-                println!("Trying to write to read/only!");
+                serial_println!("Trying to write to read/only!");
                 return Err(BlockErrors::ReadOnly);
             }
             if size % 512 != 0 {
@@ -400,7 +402,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = BLOCK_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            println!("Invalid block device for interrupt {}", idx + 1);
+            serial_println!("Invalid block device for interrupt {}", idx + 1);
         }
     }
 }
@@ -425,7 +427,7 @@ fn read_proc(args_addr: usize) {
 }
 
 pub fn process_read(pid: u16, dev: usize, buffer: *mut u8, size: u32, offset: u64) {
-    // println!("Block read {}, {}, 0x{:x}, {}, {}", pid, dev, buffer as
+    // serial_println!("Block read {}, {}, 0x{:x}, {}, {}", pid, dev, buffer as
     // usize, size, offset);
     let args = ProcArgs {
         pid,

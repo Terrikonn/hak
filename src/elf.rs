@@ -226,7 +226,7 @@ impl File {
                 // been bitten by it. I mapped too far and mapped userspace into the MMU
                 // table, which is AWFUL!
                 map(table, vaddr, paddr, bits, 0);
-                // println!("DEBUG: Map 0x{:08x} to 0x{:08x} {:02x}", vaddr, paddr, bits);
+                // serial_println!("DEBUG: Map 0x{:08x} to 0x{:08x} {:02x}", vaddr, paddr, bits);
             }
         }
         // This will map all of the program pages. Notice that in linker.lds in

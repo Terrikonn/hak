@@ -7,6 +7,8 @@ use crate::{
         zalloc,
         PAGE_SIZE,
     },
+    serial_print,
+    serial_println,
     virtio::{
         Descriptor,
         MmioOffsets,
@@ -156,7 +158,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        print!("features fail...");
+        serial_print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32())
             .write_volatile(StatusField::Failed.val32());
         return false;
@@ -169,7 +171,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::QueueNum.scale32())
         .write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        print!("queue size fail...");
+        serial_print!("queue size fail...");
         return false;
     } // First, if the block device array is empty, create it!
     // We add 4095 to round this up and then do an integer
@@ -177,7 +179,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
     // because if it is exactly 4096 bytes, we would get two
     // pages, not one.
     let num_pages = (size_of::<Queue>() + PAGE_SIZE - 1) / PAGE_SIZE;
-    // println!("np = {}", num_pages);
+    // serial_println!("np = {}", num_pages);
     // We allocate a page for each device. This will the the
     // descriptor where we can communicate with the block
     // device. We will still use an MMIO register (in
@@ -226,7 +228,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
 
     // config_ptr.write_volatile(config);
     // let id = config_ptr.read_volatile().config.abs;
-    // println!(
+    // serial_println!(
     //     "Min: {}, Max: {}, fuzz: {}, flat: {}, res: {}",
     //     id.min, id.max, id.fuzz, id.flat, id.res
     // );
@@ -279,9 +281,9 @@ fn pending(dev: &mut Device) {
             let elem = &queue.used.ring[dev.event_ack_used_idx as usize % VIRTIO_RING_SIZE];
             let desc = &queue.desc[elem.id as usize];
             let event = (desc.addr as *const Event).as_ref().unwrap();
-            // print!("EAck {}, elem {}, len {}, addr 0x{:08x}: ", dev.event_ack_used_idx, elem.id, elem.len,
-            // desc.addr as usize); println!("Type = {:x}, Code = {:x}, Value = {:x}",
-            // event.event_type, event.code, event.value);
+            // serial_print!("EAck {}, elem {}, len {}, addr 0x{:08x}: ", dev.event_ack_used_idx, elem.id,
+            // elem.len, desc.addr as usize); serial_println!("Type = {:x}, Code = {:x}, Value =
+            // {:x}", event.event_type, event.code, event.value);
             repopulate_event(dev, elem.id as usize);
             dev.event_ack_used_idx = dev.event_ack_used_idx.wrapping_add(1);
             match event.event_type {
@@ -302,12 +304,14 @@ fn pending(dev: &mut Device) {
         let queue = &(*dev.status_queue);
         while dev.status_ack_used_idx != queue.used.idx {
             let elem = &queue.used.ring[dev.status_ack_used_idx as usize % VIRTIO_RING_SIZE];
-            print!("SAck {}, elem {}, len {}: ", dev.status_ack_used_idx, elem.id, elem.len);
+            serial_print!("SAck {}, elem {}, len {}: ", dev.status_ack_used_idx, elem.id, elem.len);
             let desc = &queue.desc[elem.id as usize];
             let event = (desc.addr as *const Event).as_ref().unwrap();
-            println!(
+            serial_println!(
                 "Type = {:x}, Code = {:x}, Value = {:x}",
-                event.event_type as u8, event.code, event.value
+                event.event_type as u8,
+                event.code,
+                event.value
             );
             dev.status_ack_used_idx = dev.status_ack_used_idx.wrapping_add(1);
         }
@@ -319,7 +323,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = INPUT_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            println!("Invalid input device for interrupt {}", idx + 1);
+            serial_println!("Invalid input device for interrupt {}", idx + 1);
         }
     }
 }

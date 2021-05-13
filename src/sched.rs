@@ -5,6 +5,7 @@ use crate::{
         PROCESS_LIST,
         PROCESS_LIST_MUTEX,
     },
+    serial_println,
 };
 
 pub fn schedule() -> usize {
@@ -42,7 +43,7 @@ pub fn schedule() -> usize {
             }
             PROCESS_LIST.replace(pl);
         } else {
-            println!("could not take process list");
+            serial_println!("could not take process list");
         }
         PROCESS_LIST_MUTEX.unlock();
     }

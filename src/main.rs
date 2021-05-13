@@ -21,38 +21,10 @@
     clippy::cargo
 )]
 
-#[macro_use]
-extern crate tracing;
-use tracing::Level;
-
 // #[macro_use]
 extern crate alloc;
 // This is experimental and requires alloc_prelude as a feature
 // use alloc::prelude::v1::*;
-
-/// Std println alternative for kernel debug without newline
-///
-/// Uses uart under the hood to print characters in terminal in
-/// host machine
-#[macro_export]
-macro_rules! print {
-    ($($args:tt)+) => ({
-        use core::fmt::Write;
-        let _ = write!(uart::uart::Uart::new(0x1000_0000), $($args)+);
-    });
-}
-
-/// Std println alternative for kernel debug with newline
-#[macro_export]
-macro_rules! println {
-    () => (print!("\r\n"));
-    ($fmt:expr) => (
-        print!(concat!($fmt, "\r\n"))
-    );
-    ($fmt:expr, $($args:tt)+) => (
-        print!(concat!($fmt, "\r\n"), $($args)+)
-    );
-}
 
 /// Exception handler presonality
 ///
@@ -63,11 +35,11 @@ extern "C" fn eh_personality() {}
 /// Custom panic handler
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    print!("Aborting: ");
+    serial_print!("Aborting: ");
     if let Some(p) = info.location() {
-        println!("line {}, file {}: {}", p.line(), p.file(), info.message().unwrap());
+        serial_println!("line {}, file {}: {}", p.line(), p.file(), info.message().unwrap());
     } else {
-        println!("no information available.");
+        serial_println!("no information available.");
     }
     abort();
 }
@@ -103,15 +75,9 @@ fn rust_switch_to_user(frame: usize) -> ! {
 /// Kernel entry point
 #[no_mangle]
 extern "C" fn kinit() {
-    uart::uart::Uart::new(0x1000_0000).init();
-
     page::init();
     kmem::init();
-    let collector = klog::KernelSubscriber::new(uart::uart::Uart::new(0x1000_0000), 2);
-    tracing::subscriber::set_global_default(collector).unwrap();
-
-    let server_span = span!(Level::TRACE, "kernel", host = "qemu-riscv");
-    let _e2 = server_span.enter();
+    serial_println!("Hello from new uart crate");
     process::init();
     // We lower the threshold wall so our interrupts can jump over it.
     // Any priority > 0 will be able to be "heard"
@@ -129,7 +95,6 @@ extern "C" fn kinit() {
     // Test the block driver!
     process::add_kernel_process(test::test);
 
-    info!("starting gpu initialization...");
     // Get the GPU going
     virtio::gpu::init(6);
     // We schedule the next context switch using a multiplier of 1
@@ -168,13 +133,13 @@ pub mod plic;
 pub mod process;
 /// Process scheduling
 pub mod sched;
+/// Output through serial port
+pub mod serial;
 /// System calls
 pub mod syscall;
 /// First initalized process
 pub mod test;
 /// Trampoline for interrupts
 pub mod trap;
-// /// Universal Asynchronous Receiver-Transmitter
-// pub mod uart;
 /// Virtual input/output protocol
 pub mod virtio;

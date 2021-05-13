@@ -202,7 +202,7 @@ pub fn print_table() {
         let mut head = KMEM_HEAD;
         let tail = (KMEM_HEAD as *mut u8).add(KMEM_ALLOC * PAGE_SIZE) as *mut AllocList;
         while head < tail {
-            println!(
+            crate::serial_println!(
                 "{:p}: Length = {:<10} Taken = {}",
                 head,
                 (*head).get_size(),

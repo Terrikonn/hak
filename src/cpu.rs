@@ -4,6 +4,11 @@
 //!
 //! Check [RISC-V specifications](https://riscv.org/technical/specifications/) for further research
 
+use crate::{
+    serial_print,
+    serial_println,
+};
+
 /// The frequency of QEMU timer interrupt
 pub const FREQ: u64 = 10_000_000;
 /// Switch process context of process 250 time per second
@@ -484,13 +489,13 @@ impl MTime {
 
 /// Dumps the registers of a given [`TrapFrame`]. This is NOT the current CPU registers!
 pub fn dump_registers(frame: *const TrapFrame) {
-    print!("   ");
+    serial_print!("   ");
     // for i in 1..32 {
     //     if i % 4 == 0 {
-    //         println!();
-    //         print!("   ");
+    //         serial_println!();
+    //         serial_print!("   ");
     //     }
-    //     print!("x{:2}:{:08x}   ", i, unsafe { (*frame).regs[i] });
+    //     serial_print!("x{:2}:{:08x}   ", i, unsafe { (*frame).regs[i] });
     // }
-    println!();
+    serial_println!();
 }

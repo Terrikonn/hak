@@ -3,6 +3,11 @@ use core::{
     ptr::null_mut,
 };
 
+use crate::{
+    serial_print,
+    serial_println,
+};
+
 // ////////////////////////////////
 // // Allocation routines
 // ////////////////////////////////
@@ -203,7 +208,7 @@ pub fn dealloc(ptr: *mut u8) {
         // calculate here is the page structure, not the HEAP address!
         assert!(addr >= HEAP_START && addr < ALLOC_START);
         let mut p = addr as *mut Page;
-        // println!("PTR in is {:p}, addr is 0x{:x}", ptr, addr);
+        // serial_println!("PTR in is {:p}, addr is 0x{:x}", ptr, addr);
         assert!((*p).is_taken(), "Freeing a non-taken page?");
         // Keep clearing pages until we hit the last page.
         while (*p).is_taken() && !(*p).is_last() {
@@ -231,25 +236,28 @@ pub fn print_page_allocations() {
         let end = beg.add(num_pages);
         let alloc_beg = ALLOC_START;
         let alloc_end = ALLOC_START + num_pages * PAGE_SIZE;
-        println!();
-        println!(
+        serial_println!();
+        serial_println!(
             "PAGE ALLOCATION TABLE\nMETA: {:p} -> {:p}\nPHYS: 0x{:x} -> 0x{:x}",
-            beg, end, alloc_beg, alloc_end
+            beg,
+            end,
+            alloc_beg,
+            alloc_end
         );
-        println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        serial_println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         let mut num = 0;
         while beg < end {
             if (*beg).is_taken() {
                 let start = beg as usize;
                 let memaddr = ALLOC_START + (start - HEAP_START) * PAGE_SIZE;
-                print!("0x{:x} => ", memaddr);
+                serial_print!("0x{:x} => ", memaddr);
                 loop {
                     num += 1;
                     if (*beg).is_last() {
                         let end = beg as usize;
                         let memaddr = ALLOC_START + (end - HEAP_START) * PAGE_SIZE + PAGE_SIZE - 1;
-                        print!("0x{:x}: {:>3} page(s)", memaddr, (end - start + 1));
-                        println!(".");
+                        serial_print!("0x{:x}: {:>3} page(s)", memaddr, (end - start + 1));
+                        serial_println!(".");
                         break;
                     }
                     beg = beg.add(1);
@@ -257,14 +265,14 @@ pub fn print_page_allocations() {
             }
             beg = beg.add(1);
         }
-        println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-        println!("Allocated: {:>6} pages ({:>10} bytes).", num, num * PAGE_SIZE);
-        println!(
+        serial_println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        serial_println!("Allocated: {:>6} pages ({:>10} bytes).", num, num * PAGE_SIZE);
+        serial_println!(
             "Free     : {:>6} pages ({:>10} bytes).",
             num_pages - num,
             (num_pages - num) * PAGE_SIZE
         );
-        println!();
+        serial_println!();
     }
 }
 

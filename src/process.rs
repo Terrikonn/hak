@@ -26,6 +26,7 @@ use crate::{
         Table,
         PAGE_SIZE,
     },
+    serial_println,
     syscall::syscall_exit,
 };
 
@@ -181,14 +182,14 @@ pub unsafe fn get_by_pid(pid: u16) -> *mut Process {
 fn init_process() {
     // We can't do much here until we have system calls because
     // we're running in User space.
-    println!("Init process started...");
+    serial_println!("Init process started...");
     loop {
         // Alright, I forgot. We cannot put init to sleep since the
         // scheduler will loop until it finds a process to run. Since
         // the scheduler is called in an interrupt context, nothing else
         // can happen until a process becomes available.
-        // println!("Init is still here :), alright, back to sleep.");
-        // 500 wfi's should take 500 context switches before we print
+        // serial_println!("Init is still here :), alright, back to sleep.");
+        // 500 wfi's should take 500 context switches before we serial_print
         // Init is still here. Depending on our context switch time,
         // this might be around 3 seconds.
         for _ in 0..500 {
@@ -247,7 +248,7 @@ pub fn add_kernel_process(func: fn()) -> u16 {
     // us the only copy of the Deque.
     let func_addr = func as usize;
     let func_v_addr = func_addr; //- 0x6000_0000;
-    // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
+    // serial_println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
     // We will convert NEXT_PID below into an atomic increment when
     // we start getting into multi-hart processing. For now, we want
     // a process. Get it to work, then improve it!
@@ -337,7 +338,7 @@ pub fn add_kernel_process_args(func: fn(args_ptr: usize), args: usize) -> u16 {
         // us the only copy of the Deque.
         let func_addr = func as usize;
         let func_v_addr = func_addr; //- 0x6000_0000;
-        // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
+        // serial_println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
         // We will convert NEXT_PID below into an atomic increment when
         // we start getting into multi-hart processing. For now, we want
         // a process. Get it to work, then improve it!
@@ -412,7 +413,7 @@ pub fn init() -> usize {
         let pl = PROCESS_LIST.take().unwrap();
         let p = pl.front().unwrap().frame;
         // let frame = p as *const TrapFrame as usize;
-        // println!("Init's frame is at 0x{:08x}", frame);
+        // serial_println!("Init's frame is at 0x{:08x}", frame);
         // Put the process list back in the global.
         PROCESS_LIST.replace(pl);
         PROCESS_LIST_MUTEX.unlock();
@@ -503,7 +504,7 @@ impl Process {
     pub fn new_default(func: fn()) -> Self {
         let func_addr = func as usize;
         let func_v_addr = func_addr;
-        // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
+        // serial_println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
         // We will convert NEXT_PID below into an atomic increment when
         // we start getting into multi-hart processing. For now, we want
         // a process. Get it to work, then improve it!
@@ -548,7 +549,7 @@ impl Process {
         for i in 0..STACK_PAGES {
             let addr = i * PAGE_SIZE;
             map(pt, STACK_ADDR + addr, s_addr + addr, EntryBits::UserReadWrite.val(), 0);
-            // println!("Set stack from 0x{:016x} -> 0x{:016x}",
+            // serial_println!("Set stack from 0x{:016x} -> 0x{:016x}",
             // STACK_ADDR + addr, saddr + addr);
         }
         // Map the program counter on the MMU and other bits
