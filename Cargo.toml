@@ -16,7 +16,6 @@ riscv = { path = "arch/riscv" }
 
 [workspace]
 members = [
-    "bootloader",
     "arch/riscv",
     "klog",
     "xtask",
