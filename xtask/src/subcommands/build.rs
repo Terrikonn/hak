@@ -26,17 +26,16 @@ pub struct Build {
 
 impl Build {
     pub fn execute(&self) -> Result<()> {
-        let optional_release = if self.release { Some("--release") } else { None };
+        let optional_release = if self.release {
+            Some("--release")
+        } else {
+            None
+        };
         let target = self.target.to_string();
         // TODO: rewrite without hardcoding and unwraps :)
         let rust_flags = format!(
             "-C link-arg=-T{}/src/lds/virt.lds",
-            try_find_path_to_terrikon_hak()
-                .unwrap()
-                .as_os_str()
-                .to_str()
-                .unwrap()
-                .to_string()
+            try_find_path_to_terrikon_hak().unwrap().as_os_str().to_str().unwrap().to_string()
         );
         let _e = pushenv("RUSTFLAGS", rust_flags);
 

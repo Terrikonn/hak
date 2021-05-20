@@ -9,19 +9,21 @@ use alloc::{
     sync::Arc,
     vec::Vec,
 };
-use core::{
-    sync::atomic::{
-        AtomicUsize,
-        Ordering,
-    },
+use core::sync::atomic::{
+    AtomicUsize,
+    Ordering,
 };
 
 use hashbrown::HashMap;
+use lazy_static::lazy_static;
 use owo_colors::{
     colors::xterm::*,
     OwoColorize,
 };
-use spin::{Mutex, MutexGuard};
+use spin::{
+    Mutex,
+    MutexGuard,
+};
 use tracing::{
     field::{
         Field,
@@ -31,7 +33,6 @@ use tracing::{
     Level,
     Subscriber,
 };
-use lazy_static::lazy_static;
 
 #[derive(Clone)]
 pub struct CurrentSpan {
@@ -43,7 +44,9 @@ impl CurrentSpan {
         lazy_static! {
             static ref CURRENT: Arc<Mutex<Vec<Id>>> = Arc::new(Mutex::new(Vec::new()));
         }
-        Self { current: &CURRENT }
+        Self {
+            current: &CURRENT,
+        }
     }
 
     pub fn id(&self) -> Option<Id> {
@@ -111,7 +114,16 @@ impl Visit for Span {
 
 impl<'a, O: fmt::Write> Visit for Event<'a, O> {
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
-        write!(&mut self.output, "{comma} ", comma = if self.comma { "," } else { "" },).unwrap();
+        write!(
+            &mut self.output,
+            "{comma} ",
+            comma = if self.comma {
+                ","
+            } else {
+                ""
+            },
+        )
+        .unwrap();
         let name = field.name();
         if name == "message" {
             write!(&mut self.output, "{}", format!("{:?}", value).bold()).unwrap();
@@ -193,10 +205,7 @@ impl<O: fmt::Write + 'static> Subscriber for KernelSubscriber<O> {
         let data = spans.get(span_id);
         let parent = data.and_then(|span| span.parent.as_ref());
         if !stack.iter().any(|id| id == span_id) {
-            let indent = if let Some(idx) = stack
-                .iter()
-                .position(|id| parent.map(|p| id == p).unwrap_or(false))
-            {
+            let indent = if let Some(idx) = stack.iter().position(|id| parent.map(|p| id == p).unwrap_or(false)) {
                 let idx = idx + 1;
                 stack.truncate(idx);
                 idx
@@ -207,8 +216,7 @@ impl<O: fmt::Write + 'static> Subscriber for KernelSubscriber<O> {
             self.print_indent(&mut output, indent).unwrap();
             stack.push(span_id.clone());
             if let Some(data) = data {
-                self.print_kvs(&mut output, data.kvs.iter().map(|(k, v)| (k, v)), "")
-                    .unwrap()
+                self.print_kvs(&mut output, data.kvs.iter().map(|(k, v)| (k, v)), "").unwrap()
             }
             writeln!(&mut output).unwrap();
         }
@@ -226,7 +234,7 @@ impl<O: fmt::Write + 'static> Subscriber for KernelSubscriber<O> {
         )
         .unwrap();
         let mut visitor = Event {
-            output: output,
+            output,
             comma: false,
         };
         event.record(&mut visitor);

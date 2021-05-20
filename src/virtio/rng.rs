@@ -63,8 +63,7 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     // 4. Read device feature bits, write subset of feature
     // bits understood by OS and driver    to the device.
     let host_features = ptr.add(MmioOffsets::HostFeatures.scale32()).read_volatile();
-    ptr.add(MmioOffsets::GuestFeatures.scale32())
-        .write_volatile(host_features);
+    ptr.add(MmioOffsets::GuestFeatures.scale32()).write_volatile(host_features);
     // 5. Set the FEATURES_OK status bit
     status_bits |= StatusField::FeaturesOk.val32();
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
@@ -77,8 +76,7 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
         serial_print!("features fail...");
-        ptr.add(MmioOffsets::Status.scale32())
-            .write_volatile(StatusField::Failed.val32());
+        ptr.add(MmioOffsets::Status.scale32()).write_volatile(StatusField::Failed.val32());
         return false;
     }
     // 7. Perform device-specific setup.
@@ -86,8 +84,7 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     // queue size is valid because the device can only take
     // a certain size.
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
-    ptr.add(MmioOffsets::QueueNum.scale32())
-        .write_volatile(VIRTIO_RING_SIZE as u32);
+    ptr.add(MmioOffsets::QueueNum.scale32()).write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
         serial_print!("queue size fail...");
         return false;
@@ -116,15 +113,13 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     // ptr.add(MmioOffsets::QueueAlign.scale32()).write_volatile(2);
     let queue_ptr = zalloc(num_pages) as *mut Queue;
     let queue_pfn = queue_ptr as u32;
-    ptr.add(MmioOffsets::GuestPageSize.scale32())
-        .write_volatile(PAGE_SIZE as u32);
+    ptr.add(MmioOffsets::GuestPageSize.scale32()).write_volatile(PAGE_SIZE as u32);
     // QueuePFN is a physical page number, however it
     // appears for QEMU we have to write the entire memory
     // address. This is a physical memory address where we
     // (the OS) and the block device have in common for
     // making and receiving requests.
-    ptr.add(MmioOffsets::QueuePfn.scale32())
-        .write_volatile(queue_pfn / PAGE_SIZE as u32);
+    ptr.add(MmioOffsets::QueuePfn.scale32()).write_volatile(queue_pfn / PAGE_SIZE as u32);
     // 8. Set the DRIVER_OK status bit. Device is now "live"
     status_bits |= StatusField::DriverOk.val32();
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);

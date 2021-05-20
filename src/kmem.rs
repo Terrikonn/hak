@@ -202,12 +202,7 @@ pub fn print_table() {
         let mut head = KMEM_HEAD;
         let tail = (KMEM_HEAD as *mut u8).add(KMEM_ALLOC * PAGE_SIZE) as *mut AllocList;
         while head < tail {
-            crate::serial_println!(
-                "{:p}: Length = {:<10} Taken = {}",
-                head,
-                (*head).get_size(),
-                (*head).is_taken()
-            );
+            crate::serial_println!("{:p}: Length = {:<10} Taken = {}", head, (*head).get_size(), (*head).is_taken());
             head = (head as *mut u8).add((*head).get_size()) as *mut AllocList;
         }
     }
@@ -257,9 +252,5 @@ static GA: OsGlobalAlloc = OsGlobalAlloc;
 /// then we come here. This is a divergent function, so we call panic to
 /// let the tester know what's going on.
 pub fn alloc_error(l: Layout) -> ! {
-    panic!(
-        "Allocator failed to allocate {} bytes with {}-byte alignment.",
-        l.size(),
-        l.align()
-    );
+    panic!("Allocator failed to allocate {} bytes with {}-byte alignment.", l.size(), l.align());
 }

@@ -50,7 +50,13 @@ impl Run {
         let mut path_to_kernel = try_find_path_to_terrikon_hak().unwrap();
         path_to_kernel.push("target");
         path_to_kernel.push(self.target.to_string());
-        path_to_kernel.push(if self.release { "release" } else { "debug" });
+        path_to_kernel.push(
+            if self.release {
+                "release"
+            } else {
+                "debug"
+            },
+        );
         path_to_kernel.push("hak");
 
         let path_to_hdd = path_to_hdd.into_os_string().into_string().unwrap();

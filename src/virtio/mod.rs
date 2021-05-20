@@ -233,7 +233,9 @@ impl VirtioDevice {
     }
 
     pub const fn new_with(devtype: DeviceTypes) -> Self {
-        Self { devtype }
+        Self {
+            devtype,
+        }
     }
 }
 

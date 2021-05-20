@@ -338,7 +338,11 @@ pub unsafe fn do_syscall(mepc: usize, frame: *mut TrapFrame) -> usize {
                         let process = get_by_pid((*frame).pid as u16);
                         let table = ((*process).get_table_address() as *mut Table).as_mut().unwrap();
                         (*frame).regs.a0 = 0;
-                        for i in 0..if max_events <= ev.len() { max_events } else { ev.len() } {
+                        for i in 0..if max_events <= ev.len() {
+                            max_events
+                        } else {
+                            ev.len()
+                        } {
                             let paddr = virt_to_phys(table, vaddr.add(i) as usize);
                             if paddr.is_none() {
                                 break;
@@ -359,7 +363,11 @@ pub unsafe fn do_syscall(mepc: usize, frame: *mut TrapFrame) -> usize {
                         let process = get_by_pid((*frame).pid as u16);
                         let table = ((*process).get_table_address() as *mut Table).as_mut().unwrap();
                         (*frame).regs.a0 = 0;
-                        for i in 0..if max_events <= ev.len() { max_events } else { ev.len() } {
+                        for i in 0..if max_events <= ev.len() {
+                            max_events
+                        } else {
+                            ev.len()
+                        } {
                             let paddr = virt_to_phys(table, v_addr.add(i) as usize);
                             if paddr.is_none() {
                                 break;
@@ -421,28 +429,12 @@ pub fn syscall_execv(path: *const u8, argv: usize) -> usize {
 
 /// Read file in file system
 pub fn syscall_fs_read(dev: usize, inode: u32, buffer: *mut u8, size: u32, offset: u32) -> usize {
-    do_make_syscall(
-        Syscall::Read.into(),
-        dev,
-        inode as usize,
-        buffer as usize,
-        size as usize,
-        offset as usize,
-        0,
-    )
+    do_make_syscall(Syscall::Read.into(), dev, inode as usize, buffer as usize, size as usize, offset as usize, 0)
 }
 
 /// Read the block on device
 pub fn syscall_block_read(dev: usize, buffer: *mut u8, size: u32, offset: u32) -> u8 {
-    do_make_syscall(
-        Syscall::BlockRead.into(),
-        dev,
-        buffer as usize,
-        size as usize,
-        offset as usize,
-        0,
-        0,
-    ) as u8
+    do_make_syscall(Syscall::BlockRead.into(), dev, buffer as usize, size as usize, offset as usize, 0, 0) as u8
 }
 
 /// Gives a little sleep to the process

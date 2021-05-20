@@ -236,7 +236,11 @@ impl MinixFileSystem {
         // First, the _size parameter (now in bytes_left) is the size of the buffer, not
         // necessarily the size of the file. If our buffer is bigger than the file, we're OK.
         // If our buffer is smaller than the file, then we can only read up to the buffer size.
-        let mut bytes_left = if size > inode.size { inode.size } else { size };
+        let mut bytes_left = if size > inode.size {
+            inode.size
+        } else {
+            size
+        };
         let mut bytes_read = 0_u32;
         // The block buffer automatically drops when we quit early due to an error or we've read enough.
         // This will be the holding port when we go out and read a block. Recall that even if we want 10
@@ -332,12 +336,7 @@ impl MinixFileSystem {
                 unsafe {
                     if izones.add(i).read() != 0 {
                         if offset_block <= blocks_seen {
-                            syc_read(
-                                bdev,
-                                block_buffer.get_mut(),
-                                BLOCK_SIZE,
-                                BLOCK_SIZE * izones.add(i).read(),
-                            );
+                            syc_read(bdev, block_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * izones.add(i).read());
                             let read_this_many = if BLOCK_SIZE - offset_byte > bytes_left {
                                 bytes_left
                             } else {
@@ -368,12 +367,7 @@ impl MinixFileSystem {
             unsafe {
                 for i in 0..NUM_IPTRS {
                     if izones.add(i).read() != 0 {
-                        syc_read(
-                            bdev,
-                            iindirect_buffer.get_mut(),
-                            BLOCK_SIZE,
-                            BLOCK_SIZE * izones.add(i).read(),
-                        );
+                        syc_read(bdev, iindirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * izones.add(i).read());
                         for j in 0..NUM_IPTRS {
                             if iizones.add(j).read() != 0 {
                                 // Notice that this inner code is the same for all end-zone pointers. I'm thinking about
@@ -418,12 +412,7 @@ impl MinixFileSystem {
             unsafe {
                 for i in 0..NUM_IPTRS {
                     if izones.add(i).read() != 0 {
-                        syc_read(
-                            bdev,
-                            iindirect_buffer.get_mut(),
-                            BLOCK_SIZE,
-                            BLOCK_SIZE * izones.add(i).read(),
-                        );
+                        syc_read(bdev, iindirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * izones.add(i).read());
                         for j in 0..NUM_IPTRS {
                             if iizones.add(j).read() != 0 {
                                 syc_read(

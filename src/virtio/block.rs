@@ -182,8 +182,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     let host_features = ptr.add(MmioOffsets::HostFeatures.scale32()).read_volatile();
     let guest_features = host_features & !(1 << VIRTIO_BLK_F_RO);
     let ro = host_features & (1 << VIRTIO_BLK_F_RO) != 0;
-    ptr.add(MmioOffsets::GuestFeatures.scale32())
-        .write_volatile(guest_features);
+    ptr.add(MmioOffsets::GuestFeatures.scale32()).write_volatile(guest_features);
     // 5. Set the FEATURES_OK status bit
     status_bits |= StatusField::FeaturesOk.val32();
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
@@ -196,16 +195,14 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
         serial_print!("features fail...");
-        ptr.add(MmioOffsets::Status.scale32())
-            .write_volatile(StatusField::Failed.val32());
+        ptr.add(MmioOffsets::Status.scale32()).write_volatile(StatusField::Failed.val32());
         return false;
     } // 7. Perform device-specific setup.
     // Set the queue num. We have to make sure that the
     // queue size is valid because the device can only take
     // a certain size.
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
-    ptr.add(MmioOffsets::QueueNum.scale32())
-        .write_volatile(VIRTIO_RING_SIZE as u32);
+    ptr.add(MmioOffsets::QueueNum.scale32()).write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
         serial_print!("queue size fail...");
         return false;
@@ -233,15 +230,13 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // ptr.add(MmioOffsets::QueueAlign.scale32()).write_volatile(2);
     let queue_ptr = zalloc(num_pages) as *mut Queue;
     let queue_pfn = queue_ptr as u32;
-    ptr.add(MmioOffsets::GuestPageSize.scale32())
-        .write_volatile(PAGE_SIZE as u32);
+    ptr.add(MmioOffsets::GuestPageSize.scale32()).write_volatile(PAGE_SIZE as u32);
     // QueuePFN is a physical page number, however it
     // appears for QEMU we have to write the entire memory
     // address. This is a physical memory address where we
     // (the OS) and the block device have in common for
     // making and receiving requests.
-    ptr.add(MmioOffsets::QueuePfn.scale32())
-        .write_volatile(queue_pfn / PAGE_SIZE as u32);
+    ptr.add(MmioOffsets::QueuePfn.scale32()).write_volatile(queue_pfn / PAGE_SIZE as u32);
     // We need to store all of this data as a "BlockDevice"
     // structure We will be referring to this structure when
     // making block requests AND when handling responses.
@@ -321,7 +316,11 @@ pub fn block_op(
             (*blk_request).header.sector = sector;
             // A write is an "out" direction, whereas a read is an
             // "in" direction.
-            (*blk_request).header.blktype = if write { VIRTIO_BLK_T_OUT } else { VIRTIO_BLK_T_IN };
+            (*blk_request).header.blktype = if write {
+                VIRTIO_BLK_T_OUT
+            } else {
+                VIRTIO_BLK_T_IN
+            };
             // We put 111 in the status. Whenever the device
             // finishes, it will write into status. If we read
             // status and it is 111, we know that it wasn't written
@@ -333,7 +332,12 @@ pub fn block_op(
             let desc = Descriptor {
                 addr: buffer as u64,
                 len: size,
-                flags: virtio::VIRTIO_DESC_F_NEXT | if write { 0 } else { virtio::VIRTIO_DESC_F_WRITE },
+                flags: virtio::VIRTIO_DESC_F_NEXT |
+                    if write {
+                        0
+                    } else {
+                        virtio::VIRTIO_DESC_F_WRITE
+                    },
                 next: 0,
             };
             let _data_idx = fill_next_descriptor(bdev, desc);

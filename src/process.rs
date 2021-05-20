@@ -555,13 +555,7 @@ impl Process {
         // Map the program counter on the MMU and other bits
         for i in 0..=100 {
             let modifier = i * 0x1000;
-            map(
-                pt,
-                func_v_addr + modifier,
-                func_addr + modifier,
-                EntryBits::UserReadWriteExecute.val(),
-                0,
-            );
+            map(pt, func_v_addr + modifier, func_addr + modifier, EntryBits::UserReadWriteExecute.val(), 0);
         }
         ret_proc
     }

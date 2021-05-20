@@ -217,10 +217,7 @@ pub fn dealloc(ptr: *mut u8) {
         }
         // If the following assertion fails, it is most likely
         // caused by a double-free.
-        assert!(
-            (*p).is_last(),
-            "Possible double-free detected! (Not taken found before last)"
-        );
+        assert!((*p).is_last(), "Possible double-free detected! (Not taken found before last)");
         // If we get here, we've taken care of all previous pages and
         // we are on the last page.
         (*p).clear();
@@ -267,11 +264,7 @@ pub fn print_page_allocations() {
         }
         serial_println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         serial_println!("Allocated: {:>6} pages ({:>10} bytes).", num, num * PAGE_SIZE);
-        serial_println!(
-            "Free     : {:>6} pages ({:>10} bytes).",
-            num_pages - num,
-            (num_pages - num) * PAGE_SIZE
-        );
+        serial_println!("Free     : {:>6} pages ({:>10} bytes).", num_pages - num, (num_pages - num) * PAGE_SIZE);
         serial_println!();
     }
 }

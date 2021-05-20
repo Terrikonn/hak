@@ -104,12 +104,7 @@ extern "C" fn m_trap(
                 rust_switch_to_user(frame);
             },
             7 => unsafe {
-                serial_println!(
-                    "Error with pid {}, at PC 0x{:08x}, mepc 0x{:08x}",
-                    (*frame).pid,
-                    (*frame).pc,
-                    epc
-                );
+                serial_println!("Error with pid {}, at PC 0x{:08x}, mepc 0x{:08x}", (*frame).pid, (*frame).pc, epc);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -154,10 +149,7 @@ extern "C" fn m_trap(
                 rust_switch_to_user(frame);
             },
             _ => {
-                panic!(
-                    "Unhandled sync trap {}. CPU#{} -> 0x{:08x}: 0x{:08x}\n",
-                    cause_num, hart, epc, tval
-                );
+                panic!("Unhandled sync trap {}. CPU#{} -> 0x{:08x}: 0x{:08x}\n", cause_num, hart, epc, tval);
             },
         }
     };
