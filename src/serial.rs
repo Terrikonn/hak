@@ -1,10 +1,10 @@
 use lazy_static::lazy_static;
 use spin::Mutex;
-use uart_16550::SerialPort;
+use uart_16550::MmioSerialPort;
 
 lazy_static! {
-    pub static ref SERIAL1: Mutex<SerialPort> = {
-        let mut serial_port = unsafe { SerialPort::new(0x1000_0000) };
+    pub static ref SERIAL1: Mutex<MmioSerialPort> = {
+        let mut serial_port = unsafe { MmioSerialPort::new(0x1000_0000) };
         serial_port.init();
         Mutex::new(serial_port)
     };

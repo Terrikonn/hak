@@ -7,16 +7,12 @@ edition = "2018"
 
 [dependencies]
 spin = "0.9.0"
-uart_16550 = { path = "../drivers/uart_16550", default-features = false, features = ["mmio_nightly"] }
+uart_16550 = { path = "../drivers/uart_16550" }
 klog = { path = "klog" }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 
-[target.riscv64gc-unknown-none-elf.dependencies]
-riscv = { path = "arch/riscv" }
-
 [workspace]
 members = [
-    "arch/riscv",
     "klog",
     "xtask",
 ]
