@@ -1,11 +1,11 @@
 use crate::{
     cpu,
+    println,
     process::{
         ProcessState,
         PROCESS_LIST,
         PROCESS_LIST_MUTEX,
     },
-    serial_println,
 };
 
 pub fn schedule() -> usize {
@@ -43,7 +43,7 @@ pub fn schedule() -> usize {
             }
             PROCESS_LIST.replace(pl);
         } else {
-            serial_println!("could not take process list");
+            println!("could not take process list");
         }
         PROCESS_LIST_MUTEX.unlock();
     }

@@ -13,8 +13,8 @@ use crate::{
         zalloc,
         PAGE_SIZE,
     },
-    serial_print,
-    serial_println,
+    print,
+    println,
     virtio,
     virtio::{
         Descriptor,
@@ -646,7 +646,7 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        serial_print!("features fail...");
+        print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32()).write_volatile(StatusField::Failed.val32());
         return false;
     }
@@ -657,7 +657,7 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
     ptr.add(MmioOffsets::QueueNum.scale32()).write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        serial_print!("queue size fail...");
+        print!("queue size fail...");
         return false;
     }
     // First, if the block device array is empty, create it!
@@ -738,7 +738,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = GPU_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            serial_println!("Invalid GPU device for interrupt {}", idx + 1);
+            println!("Invalid GPU device for interrupt {}", idx + 1);
         }
     }
 }

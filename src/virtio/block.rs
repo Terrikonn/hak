@@ -10,14 +10,14 @@ use crate::{
         zalloc,
         PAGE_SIZE,
     },
+    print,
+    println,
     process::{
         add_kernel_process_args,
         get_by_pid,
         set_running,
         set_waiting,
     },
-    serial_print,
-    serial_println,
     virtio::{
         self,
         Descriptor,
@@ -194,7 +194,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        serial_print!("features fail...");
+        print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32()).write_volatile(StatusField::Failed.val32());
         return false;
     } // 7. Perform device-specific setup.
@@ -204,7 +204,7 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
     ptr.add(MmioOffsets::QueueNum.scale32()).write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        serial_print!("queue size fail...");
+        print!("queue size fail...");
         return false;
     } // First, if the block device array is empty, create it!
     // We add 4095 to round this up and then do an integer
@@ -293,7 +293,7 @@ pub fn block_op(
             // Check to see if we are trying to write to a read only
             // device.
             if bdev.read_only && write {
-                serial_println!("Trying to write to read/only!");
+                println!("Trying to write to read/only!");
                 return Err(BlockErrors::ReadOnly);
             }
             if size % 512 != 0 {
@@ -406,7 +406,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = BLOCK_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            serial_println!("Invalid block device for interrupt {}", idx + 1);
+            println!("Invalid block device for interrupt {}", idx + 1);
         }
     }
 }

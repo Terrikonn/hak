@@ -1,6 +1,6 @@
 use crate::{
-    serial_print,
-    serial_println,
+    print,
+    println,
     virtio,
 };
 
@@ -134,19 +134,19 @@ pub fn handle_interrupt() {
                         // This is a backspace, so we
                         // essentially have to write a space and
                         // backup again:
-                        serial_print!("{} {}", 8 as char, 8 as char);
+                        print!("{} {}", 8 as char, 8 as char);
                     },
                     10 | 13 => {
                         // Newline or carriage-return
-                        serial_println!();
+                        println!();
                     },
                     _ => {
-                        serial_print!("{}", c as char);
+                        print!("{}", c as char);
                     },
                 }
             },
             _ => {
-                serial_println!("Unknown external interrupt: {}", interrupt);
+                println!("Unknown external interrupt: {}", interrupt);
             },
         }
         // We've claimed it, so now say that we've handled it. This resets the interrupt pending

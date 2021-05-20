@@ -11,10 +11,10 @@ use crate::{
         CONTEXT_SWITCH_TIME,
     },
     plic,
+    println,
     process::delete_process,
     rust_switch_to_user,
     sched::schedule,
-    serial_println,
     syscall::do_syscall,
 };
 
@@ -62,7 +62,7 @@ extern "C" fn m_trap(
             3 => {
                 // We will use this to awaken our other CPUs so they can process
                 // processes.
-                serial_println!("Machine software interrupt CPU #{}", hart);
+                println!("Machine software interrupt CPU #{}", hart);
             },
             7 => {
                 // This is the context-switch timer.
@@ -93,7 +93,7 @@ extern "C" fn m_trap(
         match cause_num {
             2 => unsafe {
                 // Illegal instruction
-                serial_println!("Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n", hart, epc, tval);
+                println!("Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n", hart, epc, tval);
                 // We need while trues here until we have a functioning "delete from scheduler"
                 // I use while true because Rust will warn us that it looks stupid.
                 // This is what I want so that I remember to remove this and replace
@@ -104,7 +104,7 @@ extern "C" fn m_trap(
                 rust_switch_to_user(frame);
             },
             7 => unsafe {
-                serial_println!("Error with pid {}, at PC 0x{:08x}, mepc 0x{:08x}", (*frame).pid, (*frame).pc, epc);
+                println!("Error with pid {}, at PC 0x{:08x}, mepc 0x{:08x}", (*frame).pid, (*frame).pc, epc);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -126,7 +126,7 @@ extern "C" fn m_trap(
             // Page faults
             12 => unsafe {
                 // Instruction page fault
-                serial_println!("Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!("Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -134,7 +134,7 @@ extern "C" fn m_trap(
             },
             13 => unsafe {
                 // Load page fault
-                serial_println!("Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!("Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -142,7 +142,7 @@ extern "C" fn m_trap(
             },
             15 => unsafe {
                 // Store page fault
-                serial_println!("Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!("Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);

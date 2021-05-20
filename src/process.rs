@@ -26,7 +26,7 @@ use crate::{
         Table,
         PAGE_SIZE,
     },
-    serial_println,
+    println,
     syscall::syscall_exit,
 };
 
@@ -182,7 +182,7 @@ pub unsafe fn get_by_pid(pid: u16) -> *mut Process {
 fn init_process() {
     // We can't do much here until we have system calls because
     // we're running in User space.
-    serial_println!("Init process started...");
+    println!("Init process started...");
     loop {
         // Alright, I forgot. We cannot put init to sleep since the
         // scheduler will loop until it finds a process to run. Since

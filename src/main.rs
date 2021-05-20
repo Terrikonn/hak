@@ -35,11 +35,11 @@ extern "C" fn eh_personality() {}
 /// Custom panic handler
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    serial_print!("Aborting: ");
+    print!("Aborting: ");
     if let Some(p) = info.location() {
-        serial_println!("line {}, file {}: {}", p.line(), p.file(), info.message().unwrap());
+        println!("line {}, file {}: {}", p.line(), p.file(), info.message().unwrap());
     } else {
-        serial_println!("no information available.");
+        println!("no information available.");
     }
     abort();
 }
@@ -77,7 +77,7 @@ fn rust_switch_to_user(frame: usize) -> ! {
 extern "C" fn kinit() {
     page::init();
     kmem::init();
-    serial_println!("Hello from new uart crate");
+    println!("Hello from new uart crate");
     process::init();
     // We lower the threshold wall so our interrupts can jump over it.
     // Any priority > 0 will be able to be "heard"

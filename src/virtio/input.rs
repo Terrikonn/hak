@@ -7,8 +7,8 @@ use crate::{
         zalloc,
         PAGE_SIZE,
     },
-    serial_print,
-    serial_println,
+    print,
+    println,
     virtio::{
         Descriptor,
         MmioOffsets,
@@ -157,7 +157,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
     // the features that we request. Therefore, this is
     // considered a "failed" state.
     if !StatusField::features_ok(status_ok) {
-        serial_print!("features fail...");
+        print!("features fail...");
         ptr.add(MmioOffsets::Status.scale32()).write_volatile(StatusField::Failed.val32());
         return false;
     }
@@ -168,7 +168,7 @@ pub unsafe fn setup_input_device(ptr: *mut u32) -> bool {
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
     ptr.add(MmioOffsets::QueueNum.scale32()).write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
-        serial_print!("queue size fail...");
+        print!("queue size fail...");
         return false;
     } // First, if the block device array is empty, create it!
     // We add 4095 to round this up and then do an integer
@@ -297,10 +297,10 @@ fn pending(dev: &mut Device) {
         let queue = &(*dev.status_queue);
         while dev.status_ack_used_idx != queue.used.idx {
             let elem = &queue.used.ring[dev.status_ack_used_idx as usize % VIRTIO_RING_SIZE];
-            serial_print!("SAck {}, elem {}, len {}: ", dev.status_ack_used_idx, elem.id, elem.len);
+            print!("SAck {}, elem {}, len {}: ", dev.status_ack_used_idx, elem.id, elem.len);
             let desc = &queue.desc[elem.id as usize];
             let event = (desc.addr as *const Event).as_ref().unwrap();
-            serial_println!("Type = {:x}, Code = {:x}, Value = {:x}", event.event_type as u8, event.code, event.value);
+            println!("Type = {:x}, Code = {:x}, Value = {:x}", event.event_type as u8, event.code, event.value);
             dev.status_ack_used_idx = dev.status_ack_used_idx.wrapping_add(1);
         }
     }
@@ -311,7 +311,7 @@ pub fn handle_interrupt(idx: usize) {
         if let Some(bdev) = INPUT_DEVICES[idx].as_mut() {
             pending(bdev);
         } else {
-            serial_println!("Invalid input device for interrupt {}", idx + 1);
+            println!("Invalid input device for interrupt {}", idx + 1);
         }
     }
 }

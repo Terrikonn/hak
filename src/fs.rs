@@ -10,13 +10,13 @@ use core::{
 
 use crate::{
     buffer::Buffer,
+    println,
     process::{
         add_kernel_process_args,
         get_by_pid,
         set_running,
         set_waiting,
     },
-    serial_println,
     syscall::syscall_block_read,
 };
 
@@ -190,7 +190,7 @@ impl MinixFileSystem {
                 MFS_INODE_CACHE[bdev - 1] = Some(btm);
             }
         } else {
-            serial_println!("KERNEL: Initialized an already initialized filesystem {}", bdev);
+            println!("KERNEL: Initialized an already initialized filesystem {}", bdev);
         }
     }
 
