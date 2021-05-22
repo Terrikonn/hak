@@ -77,7 +77,6 @@ fn rust_switch_to_user(frame: usize) -> ! {
 extern "C" fn kinit() {
     page::init();
     kmem::init();
-    println!("Hello from new uart crate");
     process::init();
     // We lower the threshold wall so our interrupts can jump over it.
     // Any priority > 0 will be able to be "heard"
