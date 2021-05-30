@@ -39,7 +39,7 @@ impl Run {
 
 fn path_to_kernel(args: &Run) -> String {
     let mut path_to_kernel = PathBuf::from("target");
-    path_to_kernel.push(args.target.to_string());
+    path_to_kernel.push(args.target.to_string().chars().take_while(|c| *c != '.').collect::<String>());
     path_to_kernel.push(if args.release {
         "release"
     } else {
