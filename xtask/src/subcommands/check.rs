@@ -1,11 +1,5 @@
-use clap::{
-    AppSettings,
-    Clap,
-};
-use xshell::{
-    cmd,
-    Result,
-};
+use clap::{AppSettings, Clap};
+use xshell::{Cmd, Result};
 
 use crate::subcommands::Target;
 
@@ -13,14 +7,23 @@ use crate::subcommands::Target;
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Check {
     /// The target for which the kernel will be assembled
-    #[clap(arg_enum, long, default_value = "riscv64gc-unknown-none-elf")]
+    #[clap(flatten)]
     pub target: Target,
 }
 
 impl Check {
     pub fn execute(&self) -> Result<()> {
         let target = self.target.to_string();
-        // TODO: rewrite without hardcoding and unwraps :)
-        cmd!("cargo check --package hak --target {target}").run()
+        let do_build_std = self
+            .target
+            .is_build_core_target()
+            .then(|| ["-Z", "build-std=core", "-Z", "build-std-features=compiler-builtins-mem"].iter());
+
+        let mut cmd = Cmd::new("cargo").arg("check").args(["--package", "hak", "--target"].iter()).arg(target);
+        if let Some(build_std) = do_build_std {
+            cmd = cmd.args(build_std);
+        }
+
+        cmd.run()
     }
 }

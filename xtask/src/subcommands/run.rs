@@ -1,93 +1,115 @@
-use clap::{
-    AppSettings,
-    Clap,
-};
-use xshell::{
-    cmd,
-    Result,
-};
+use std::path::PathBuf;
 
-use crate::{
-    subcommands::{
-        build::Build,
-        Target,
-    },
-    utils::try_find_path_to_terrikon_hak,
-};
+use clap::{AppSettings, Clap};
+use xshell::{cmd, Result};
+
+use crate::subcommands::{build::Build, Target};
 
 #[derive(Clap, Debug)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Run {
     /// The target for which the kernel will be assembled
-    #[clap(arg_enum, long, default_value = "riscv64gc-unknown-none-elf")]
+    #[clap(flatten)]
     pub target: Target,
     /// Build kernel in release mode, with optimizations
     #[clap(long)]
     pub release: bool,
-    /// Command to run hak.elf kernel file, usually this is
-    /// qemu emulator command for choosen target
-    #[clap(
-        short,
-        long,
-        default_value = "qemu-system-riscv64 -machine virt -cpu rv64 -smp 4 -m 128M -drive \
-                         if=none,format=raw,file=hdd.dsk,id=foo -device virtio-blk-device,scsi=off,drive=foo \
-                         -nographic -serial mon:stdio -bios none -device virtio-rng-device -device virtio-gpu-device \
-                         -device virtio-net-device -device virtio-tablet-device -device virtio-keyboard-device \
-                         -kernel "
-    )]
-    pub runner: String,
+    /// Command to run kernel
+    #[clap(arg_enum, short, long, default_value = "qemu")]
+    pub runner_type: RunnerType,
 }
 
 impl Run {
     pub fn execute(&self) -> Result<()> {
-        let build = Build {
+        Build {
             target: self.target.clone(),
             release: self.release,
-        };
-        build.execute()?;
+        }
+        .execute()?;
+        let path_to_kernel = path_to_kernel(&self);
 
-        let path_to_hdd = try_find_path_to_terrikon_hak().unwrap();
-        let mut path_to_kernel = try_find_path_to_terrikon_hak().unwrap();
-        path_to_kernel.push("target");
-        path_to_kernel.push(self.target.to_string());
-        path_to_kernel.push(
-            if self.release {
-                "release"
-            } else {
-                "debug"
+        let Runner {
+            command,
+            args,
+        } = self.target.runner(&self.runner_type);
+
+        cmd!("{command} {args...} {path_to_kernel}").run()
+    }
+}
+
+fn path_to_kernel(args: &Run) -> String {
+    let mut path_to_kernel = PathBuf::from("target");
+    path_to_kernel.push(args.target.to_string());
+    path_to_kernel.push(if args.release {
+        "release"
+    } else {
+        "debug"
+    });
+    path_to_kernel.push("hak");
+
+    path_to_kernel.into_os_string().into_string().unwrap()
+}
+
+impl super::TargetType {
+    fn runner(&self, runner: &crate::subcommands::run::RunnerType) -> Runner {
+        match runner {
+            RunnerType::Qemu => match self {
+                Self::Riscv64gcUnknownNoneElf => {
+                    Runner::builder().command("qemu-system-riscv64").args(&["-kernel"]).build()
+                }
+                Self::X86_64UnknownNoneElf => {
+                    Runner::builder().command("qemu-system-x86_64").args(&["-kernel"]).build()
+                }
             },
-        );
-        path_to_kernel.push("hak");
+        }
+    }
+}
 
-        let path_to_hdd = path_to_hdd.into_os_string().into_string().unwrap();
-        let path_to_kernel = path_to_kernel.into_os_string().into_string().unwrap();
+#[non_exhaustive]
+#[derive(Clap, Debug, Clone)]
+pub enum RunnerType {
+    #[clap(name = "qemu")]
+    Qemu,
+}
 
-        cmd!(
-            "
-            qemu-system-riscv64
-                -machine virt
-                -cpu rv64
-                -smp 4
-                -m 128M
-                -drive if=none,format=raw,file={path_to_hdd}/hdd.dsk,id=foo
-                -device virtio-blk-device,scsi=off,drive=foo
-                -nographic
-                -serial mon:stdio
-                -bios none
-                -device virtio-rng-device
-                -device virtio-gpu-device
-                -device virtio-net-device
-                -device virtio-tablet-device
-                -device virtio-keyboard-device
-                -kernel {path_to_kernel}
-        "
-        )
-        .run()
+pub struct Runner {
+    command: &'static str,
+    args: Vec<&'static str>,
+}
 
-        // let runner = &self.get_default_runner();
-        // cmd!("{runner}").run()
+impl Runner {
+    pub fn builder() -> RunnerBuilder {
+        RunnerBuilder::default()
+    }
+}
+
+#[derive(Default)]
+pub struct RunnerBuilder {
+    command: &'static str,
+    args: Vec<&'static str>,
+}
+
+impl RunnerBuilder {
+    pub fn command(mut self, command: &'static str) -> Self {
+        self.command = command;
+        self
     }
 
-    // #[rustfmt::skip]
-    // pub fn get_default_runner(&self) -> String {}
+    #[allow(dead_code)]
+    pub fn arg(mut self, arg: &'static str) -> Self {
+        self.args.push(arg);
+        self
+    }
+
+    pub fn args(mut self, args: &'static [&str]) -> Self {
+        self.args.append(&mut args.to_vec());
+        self
+    }
+
+    pub fn build(self) -> Runner {
+        Runner {
+            command: self.command,
+            args: self.args,
+        }
+    }
 }

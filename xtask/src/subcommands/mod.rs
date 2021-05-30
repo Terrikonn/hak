@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Deref};
 
 use clap::Clap;
 use xshell::Result;
@@ -15,8 +15,6 @@ pub enum Command {
     /// Build kernel
     #[clap(alias = "b")]
     Build(build::Build),
-    // TOOD: Rewrite runner
-    // NOTE: add subcommands to choose emulator and make emulator command builder
     /// Run kernel with emulator
     #[clap(alias = "r")]
     Run(run::Run),
@@ -33,15 +31,41 @@ impl Command {
 }
 
 #[derive(Clap, Debug, Clone)]
-#[clap(rename_all = "kebab_case")]
-pub enum Target {
-    Riscv64gcUnknownNoneElf,
+pub struct Target {
+    #[clap(arg_enum, long, default_value = "x86_64-unknown-none-elf")]
+    target: TargetType,
 }
 
-impl fmt::Display for Target {
+impl Deref for Target {
+    type Target = TargetType;
+
+    fn deref(&self) -> &Self::Target {
+        &self.target
+    }
+}
+
+#[derive(Clap, Debug, Clone)]
+#[clap(rename_all = "kebab_case")]
+pub enum TargetType {
+    Riscv64gcUnknownNoneElf,
+    #[clap(name = "x86_64-unknown-none-elf")]
+    X86_64UnknownNoneElf,
+}
+
+impl TargetType {
+    /// Returns `true` if custom json target.
+    pub fn is_build_core_target(&self) -> bool {
+        matches!(self, Self::X86_64UnknownNoneElf)
+    }
+}
+
+impl fmt::Display for TargetType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Riscv64gcUnknownNoneElf => write!(f, "riscv64gc-unknown-none-elf"),
+            Self::X86_64UnknownNoneElf => {
+                write!(f, "x86_64-unknown-none-elf.json")
+            }
         }
     }
 }
