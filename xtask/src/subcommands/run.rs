@@ -1,7 +1,4 @@
-use std::path::{
-    Path,
-    PathBuf,
-};
+use std::path::Path;
 
 use clap::{
     AppSettings,
@@ -13,8 +10,10 @@ use xshell::{
 };
 
 use crate::subcommands::{
-    build::Build,
-    image::FirmwareStandard,
+    image::{
+        FirmwareStandard,
+        Image,
+    },
     path_to_kernel_bin,
     Target,
 };
@@ -36,11 +35,12 @@ pub struct Run {
 
 impl Run {
     pub fn execute(&self) -> Result<()> {
-        let build_step = Build {
+        let image_step = Image {
             target: self.target.clone(),
             release: self.release,
+            firmware_standard: self.firmware_standard.clone(),
         };
-        build_step.execute()?;
+        image_step.execute()?;
 
         let path_to_kernel_bin = path_to_kernel_bin(&self.target, self.release);
 
@@ -102,17 +102,13 @@ impl RunnerBuilder {
         self
     }
 
+    #[allow(dead_code)]
     pub fn opt_arg(self, arg: Option<&str>) -> Self {
         if let Some(argument) = arg {
             self.arg(argument)
         } else {
             self
         }
-    }
-
-    pub fn args(mut self, mut args: Vec<String>) -> Self {
-        self.args.append(&mut args);
-        self
     }
 
     pub fn build(self) -> Runner {
