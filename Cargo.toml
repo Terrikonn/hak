@@ -12,12 +12,14 @@ uart_16550 = { path = "../drivers/uart_16550" }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 bootloader = { path = "../bootloader" }
 
+[package.metadata.bootloader]
+map-physical-memory = true
+
 [workspace]
 members = [
     "klog",
     "xtask",
 ]
-
 
 [profile.dev]
 opt-level = 0
