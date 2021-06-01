@@ -69,6 +69,8 @@ impl super::TargetType {
                     "format=raw,file={}",
                     path_to_out_dir.join("boot-bios-hak.img").into_os_string().to_str().unwrap()
                 ))
+                .arg("-serial")
+                .arg("stdio")
                 .build(),
         }
     }

@@ -6,6 +6,7 @@ authors = ["remimimimi <valent.xarin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+arch = { path = "../arch" }
 spin = "0.9.0"
 uart_16550 = { path = "../drivers/uart_16550" }
 # klog = { path = "klog" }

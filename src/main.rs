@@ -25,9 +25,19 @@ use bootloader::{
     BootInfo,
 };
 
+pub mod serial;
+
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
+    println!("Hello from kernel!");
+    if let Some(framebuffer) = boot_info.framebuffer.as_mut() {
+        let mut value = 0;
+        for byte in framebuffer.buffer_mut() {
+            *byte = value;
+            value = value.wrapping_add(1);
+        }
+    }
     loop {}
 }
 
