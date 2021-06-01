@@ -1,10 +1,25 @@
-use std::path::PathBuf;
+use std::path::{
+    Path,
+    PathBuf,
+};
 
-use clap::{AppSettings, Clap};
-use xshell::{cmd, Result};
+use clap::{
+    AppSettings,
+    Clap,
+};
+use xshell::{
+    cmd,
+    Result,
+};
 
-use crate::subcommands::{build::Build, Target};
+use crate::subcommands::{
+    build::Build,
+    image::FirmwareStandard,
+    path_to_kernel_bin,
+    Target,
+};
 
+// TODO: Rewrite separated runners for bochs and qemu as `run` subcommands
 #[derive(Clap, Debug)]
 #[clap(setting = AppSettings::ColoredHelp)]
 pub struct Run {
@@ -14,67 +29,54 @@ pub struct Run {
     /// Build kernel in release mode, with optimizations
     #[clap(long)]
     pub release: bool,
-    /// Command to run kernel
-    #[clap(arg_enum, short, long, default_value = "qemu")]
-    pub runner_type: RunnerType,
+    /// Firmware standard for bootloader
+    #[clap(arg_enum, long, default_value = "bios")]
+    pub firmware_standard: FirmwareStandard,
 }
 
 impl Run {
     pub fn execute(&self) -> Result<()> {
-        Build {
+        let build_step = Build {
             target: self.target.clone(),
             release: self.release,
-        }
-        .execute()?;
-        let path_to_kernel = path_to_kernel(&self);
+        };
+        build_step.execute()?;
+
+        let path_to_kernel_bin = path_to_kernel_bin(&self.target, self.release);
 
         let Runner {
             command,
             args,
-        } = self.target.runner(&self.runner_type);
+        } = self.target.runner(path_to_kernel_bin.parent().unwrap());
 
-        cmd!("{command} {args...} {path_to_kernel}").run()
+        cmd!("{command} {args...}").run()
     }
 }
 
-fn path_to_kernel(args: &Run) -> String {
-    let mut path_to_kernel = PathBuf::from("target");
-    path_to_kernel.push(args.target.to_string().chars().take_while(|c| *c != '.').collect::<String>());
-    path_to_kernel.push(if args.release {
-        "release"
-    } else {
-        "debug"
-    });
-    path_to_kernel.push("hak");
-
-    path_to_kernel.into_os_string().into_string().unwrap()
-}
-
 impl super::TargetType {
-    fn runner(&self, runner: &crate::subcommands::run::RunnerType) -> Runner {
-        match runner {
-            RunnerType::Qemu => match self {
-                Self::Riscv64gcUnknownNoneElf => {
-                    Runner::builder().command("qemu-system-riscv64").args(&["-kernel"]).build()
-                }
-                Self::X86_64UnknownNoneElf => {
-                    Runner::builder().command("qemu-system-x86_64").args(&["-kernel"]).build()
-                }
-            },
+    // TODO: Move runner function to `run` emulators subcommands eg
+    // `cargo xtask run qemu`
+    // `cargo xtask run bochs`
+    // Also add `--` like in cargo to pass extra arguments
+    // Plus add uefi|bios branching there, currently only bios
+    fn runner(&self, path_to_out_dir: &Path) -> Runner {
+        match self {
+            Self::Riscv64gcUnknownNoneElf => unimplemented!("riscv currently unsupported"),
+            Self::X86_64UnknownNoneElf => Runner::builder()
+                .command("qemu-system-x86_64")
+                .arg("-drive")
+                .arg(&format!(
+                    "format=raw,file={}",
+                    path_to_out_dir.join("boot-bios-hak.img").into_os_string().to_str().unwrap()
+                ))
+                .build(),
         }
     }
 }
 
-#[non_exhaustive]
-#[derive(Clap, Debug, Clone)]
-pub enum RunnerType {
-    #[clap(name = "qemu")]
-    Qemu,
-}
-
 pub struct Runner {
-    command: &'static str,
-    args: Vec<&'static str>,
+    command: String,
+    args: Vec<String>,
 }
 
 impl Runner {
@@ -85,24 +87,31 @@ impl Runner {
 
 #[derive(Default)]
 pub struct RunnerBuilder {
-    command: &'static str,
-    args: Vec<&'static str>,
+    command: String,
+    args: Vec<String>,
 }
 
 impl RunnerBuilder {
-    pub fn command(mut self, command: &'static str) -> Self {
-        self.command = command;
+    pub fn command(mut self, command: &str) -> Self {
+        self.command = command.to_string();
         self
     }
 
-    #[allow(dead_code)]
-    pub fn arg(mut self, arg: &'static str) -> Self {
-        self.args.push(arg);
+    pub fn arg(mut self, arg: &str) -> Self {
+        self.args.push(arg.to_string());
         self
     }
 
-    pub fn args(mut self, args: &'static [&str]) -> Self {
-        self.args.append(&mut args.to_vec());
+    pub fn opt_arg(self, arg: Option<&str>) -> Self {
+        if let Some(argument) = arg {
+            self.arg(argument)
+        } else {
+            self
+        }
+    }
+
+    pub fn args(mut self, mut args: Vec<String>) -> Self {
+        self.args.append(&mut args);
         self
     }
 

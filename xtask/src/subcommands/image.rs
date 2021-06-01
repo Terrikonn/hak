@@ -40,7 +40,7 @@ impl Image {
     fn build_image(&self) -> Result<()> {
         let _d = pushd("../bootloader");
 
-        let path_to_kernel_bin = PathBuf::from(format!("../hak/{}", path_to_kernel_bin(&self.target, self.release)));
+        let path_to_kernel_bin = PathBuf::from("../hak/").join(path_to_kernel_bin(&self.target, self.release));
         let kernel_manifest_path = "../hak/Cargo.toml";
         let kernel_binary_path = path_to_kernel_bin.as_os_str();
         let target_dir = "../hak/target";

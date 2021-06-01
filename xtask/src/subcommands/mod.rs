@@ -1,4 +1,8 @@
-use std::{fmt, ops::Deref, path::PathBuf};
+use std::{
+    fmt,
+    ops::Deref,
+    path::PathBuf,
+};
 
 use clap::Clap;
 use xshell::Result;
@@ -70,20 +74,22 @@ impl fmt::Display for TargetType {
             Self::Riscv64gcUnknownNoneElf => write!(f, "riscv64gc-unknown-none-elf"),
             Self::X86_64UnknownNoneElf => {
                 write!(f, "x86_64-unknown-none-elf.json")
-            }
+            },
         }
     }
 }
 
-fn path_to_kernel_bin(target: &TargetType, is_release: bool) -> String {
+fn path_to_kernel_bin(target: &TargetType, is_release: bool) -> PathBuf {
     let mut path_to_kernel = PathBuf::from("target");
     path_to_kernel.push(target.to_string().chars().take_while(|c| *c != '.').collect::<String>());
-    path_to_kernel.push(if is_release {
-        "release"
-    } else {
-        "debug"
-    });
+    path_to_kernel.push(
+        if is_release {
+            "release"
+        } else {
+            "debug"
+        },
+    );
     path_to_kernel.push("hak");
 
-    path_to_kernel.into_os_string().into_string().unwrap()
+    path_to_kernel
 }
