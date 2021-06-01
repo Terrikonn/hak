@@ -1,10 +1,11 @@
-use std::{fmt, ops::Deref};
+use std::{fmt, ops::Deref, path::PathBuf};
 
 use clap::Clap;
 use xshell::Result;
 
 pub mod build;
 pub mod check;
+pub mod image;
 pub mod run;
 
 #[derive(Clap, Debug)]
@@ -15,6 +16,9 @@ pub enum Command {
     /// Build kernel
     #[clap(alias = "b")]
     Build(build::Build),
+    /// Create bootable image of os
+    #[clap(alias = "i")]
+    Image(image::Image),
     /// Run kernel with emulator
     #[clap(alias = "r")]
     Run(run::Run),
@@ -25,6 +29,7 @@ impl Command {
         match self {
             Self::Check(check) => check.execute(),
             Self::Build(build) => build.execute(),
+            Self::Image(image) => image.execute(),
             Self::Run(run) => run.execute(),
         }
     }
@@ -68,4 +73,17 @@ impl fmt::Display for TargetType {
             }
         }
     }
+}
+
+fn path_to_kernel_bin(target: &TargetType, is_release: bool) -> String {
+    let mut path_to_kernel = PathBuf::from("target");
+    path_to_kernel.push(target.to_string().chars().take_while(|c| *c != '.').collect::<String>());
+    path_to_kernel.push(if is_release {
+        "release"
+    } else {
+        "debug"
+    });
+    path_to_kernel.push("hak");
+
+    path_to_kernel.into_os_string().into_string().unwrap()
 }
