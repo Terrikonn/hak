@@ -1,14 +1,6 @@
 #![no_main]
 #![no_std]
-#![feature(
-    panic_info_message,
-    asm,
-    global_asm,
-    allocator_api,
-    alloc_error_handler,
-    const_raw_ptr_to_usize_cast,
-    lang_items
-)]
+#![feature(allocator_api, alloc_error_handler, const_raw_ptr_to_usize_cast, lang_items)]
 #![warn(
     clippy::correctness,
     clippy::pedantic,
@@ -24,8 +16,7 @@ use bootloader::{
     entry_point,
     BootInfo,
 };
-
-pub mod serial;
+use hak::println;
 
 entry_point!(kernel_main);
 
@@ -33,12 +24,13 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     println!("Hello from kernel!");
     if let Some(framebuffer) = boot_info.framebuffer.as_mut() {
         let mut value = 0;
-        for byte in framebuffer.buffer_mut() {
+        for byte in framebuffer.buffer_mut().iter_mut().step_by(2) {
             *byte = value;
             value = value.wrapping_add(1);
         }
     }
-    loop {}
+
+    arch::independent::low_power_loop();
 }
 
 /// Exception handler presonality
@@ -50,25 +42,7 @@ extern "C" fn eh_personality() {}
 /// Custom panic handler
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    loop {}
-    // print!("Aborting: ");
-    // if let Some(p) = info.location() {
-    //     println!("line {}, file {}: {}", p.line(), p.file(), info.message().unwrap());
-    // } else {
-    //     println!("no information available.");
-    // }
-    // abort();
-}
+    println!("{}", info);
 
-// /// Never return function that waits for interrupt
-// ///
-// /// Used in `panic` to handle end of kernel
-// /// execution
-// #[no_mangle]
-// extern "C" fn abort() -> ! {
-//     loop {
-//         unsafe {
-//             asm!("wfi");
-//         }
-//     }
-// }
+    arch::independent::low_power_loop();
+}
