@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(test, no_main)]
-#![feature(allocator_api, alloc_error_handler)]
+#![feature(allocator_api, alloc_error_handler, once_cell)]
 #![warn(
     clippy::correctness,
     clippy::pedantic,

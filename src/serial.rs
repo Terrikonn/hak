@@ -1,23 +1,27 @@
-use lazy_static::lazy_static;
+use core::{
+    cell::RefCell,
+    lazy::Lazy,
+};
+
 use spin::Mutex;
 use uart_16550::SerialPort;
 
-lazy_static! {
-    pub static ref SERIAL1: Mutex<SerialPort> = {
-        let mut serial_port = unsafe { SerialPort::new(0x3F8) };
-        serial_port.init();
-        Mutex::new(serial_port)
-    };
-}
+// TODO: make abstract debug printer in arch crate
+// NOTE: can be replaced with once_cell crate
+pub static SERIAL1: Mutex<Lazy<RefCell<SerialPort>>> = Mutex::new(Lazy::new(|| {
+    let mut serial_port = unsafe { SerialPort::new(0x3F8) };
+    serial_port.init();
+    RefCell::new(serial_port)
+}));
 
 #[doc(hidden)]
-pub fn _print(args: ::core::fmt::Arguments) {
+pub fn _print(args: core::fmt::Arguments) {
     use core::fmt::Write;
 
     use arch::independent::interrupts;
 
     interrupts::free(|| {
-        SERIAL1.lock().write_fmt(args).expect("Printing to serial failed");
+        SERIAL1.lock().borrow_mut().write_fmt(args).expect("Printing to serial failed");
     });
 }
 
