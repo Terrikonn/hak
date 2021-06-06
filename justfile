@@ -18,8 +18,9 @@ check:
 
 kernel_manifest_path := justfile_directory() + "/Cargo.toml"
 target_dir := justfile_directory() + "/target/"
-out_dir := target_dir + if target == "x86_64-unknown-none-elf.json" { "x86_64-unknown-none-elf"  } else { target }
-kernel_binary_path := out_dir + "/debug/hak"
+target_triplet := if target == "x86_64-unknown-none-elf.json" { "x86_64-unknown-none-elf" } else { target }
+out_dir := target_dir + target_triplet + "/debug/"
+kernel_binary_path := out_dir + "hak"
 # Build bootable image of kernel
 build_image: build
 	cd {{justfile_directory()}}/../bootloader && \
@@ -31,7 +32,7 @@ build_image: build
 
 
 # TODO: rewrite without hardcoding
-kernel_image := out_dir + "/debug/boot-bios-hak.img"
+kernel_image := out_dir + "boot-bios-hak.img"
 # Run kernel in qemu
 run: build_image
 	qemu-system-x86_64 \
