@@ -9,6 +9,8 @@ arch = { path = "../arch" }
 spin = { version = "0.9.0", features = ["mutex", "spin_mutex"], default-features = false }
 uart_16550 = { path = "../drivers/serial/uart_16550" }
 bootloader = { path = "../bootloader" }
+logist = { path = "../logist", default-features = false }
+klog = { path = "klog" }
 
 [package.metadata.bootloader]
 map-physical-memory = true

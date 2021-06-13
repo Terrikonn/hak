@@ -1,6 +1,6 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(test, no_main)]
-#![feature(allocator_api, alloc_error_handler, once_cell)]
+#![feature(allocator_api, alloc_error_handler)]
 #![warn(
     clippy::correctness,
     clippy::pedantic,
@@ -12,4 +12,4 @@
     clippy::cargo
 )]
 
-pub mod serial;
+// pub mod serial;

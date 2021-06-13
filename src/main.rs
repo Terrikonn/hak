@@ -1,6 +1,11 @@
 #![no_main]
-#![no_std]
-#![feature(allocator_api, alloc_error_handler, const_raw_ptr_to_usize_cast, lang_items)]
+#![cfg_attr(not(test), no_std)]
+#![feature(
+    allocator_api,
+    alloc_error_handler,
+    const_raw_ptr_to_usize_cast,
+    lang_items
+)]
 #![warn(
     clippy::correctness,
     clippy::pedantic,
@@ -12,37 +17,31 @@
     clippy::cargo
 )]
 
+#[macro_use]
+extern crate logist;
+
 use bootloader::{
     entry_point,
     BootInfo,
 };
-use hak::println;
 
 entry_point!(kernel_main);
 
+static LOGGER: &'static klog::KernelLogger = &klog::KernelLogger::new();
+
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    println!("Hello from kernel!");
-    if let Some(framebuffer) = boot_info.framebuffer.as_mut() {
-        let mut value = 0;
-        for byte in framebuffer.buffer_mut().iter_mut().step_by(2) {
-            *byte = value;
-            value = value.wrapping_add(1);
-        }
-    }
+    LOGGER.init().unwrap();
+    debug!("This is an example message.");
+
+    arch::independent::init();
 
     arch::independent::low_power_loop();
 }
 
-/// Exception handler presonality
-///
-/// Empty function for compiler
-#[lang = "eh_personality"]
-extern "C" fn eh_personality() {}
-
 /// Custom panic handler
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    println!("{}", info);
+    klog::println!("{}", info);
 
     arch::independent::low_power_loop();
 }
