@@ -130,7 +130,7 @@ impl Log for KernelLogger {
             record.module_path().unwrap_or_default()
         };
         println!(
-            "{:<5} [{}] {}",
+            "{:>9} [{}] {}",
             record.level().color(level_string_color),
             target,
             record.args()
