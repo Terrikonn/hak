@@ -58,6 +58,7 @@ name = "klog"
 version = "0.1.0"
 dependencies = [
  "arch",
+ "lazy_static",
  "logist",
  "owo-colors",
  "spin 0.9.0",

@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 # hashbrown = "0.11.2"
-# lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 owo-colors = "2.0.0" # NOTE: replace with https://lib.rs/crates/cansi?
 logist = { path = "../../logist", default-features = false }
 spin = { version = "0.9.0", features = ["spin_mutex"], default-features = false }
