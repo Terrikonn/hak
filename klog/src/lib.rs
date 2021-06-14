@@ -115,7 +115,7 @@ impl Log for KernelLogger {
             return;
         }
         let level_string_color = match record.level() {
-            Level::Emerg=> DynColors::Ansi(AnsiColors::Magenta),
+            Level::Emerg => DynColors::Ansi(AnsiColors::Magenta),
             Level::Alert => DynColors::Ansi(AnsiColors::Yellow),
             Level::Crit => DynColors::Ansi(AnsiColors::Red),
             Level::Error => DynColors::Ansi(AnsiColors::BrightRed),
@@ -130,7 +130,7 @@ impl Log for KernelLogger {
             record.module_path().unwrap_or_default()
         };
         println!(
-            "{:>9} [{}] {}",
+            "{:>6} [{}] {}",
             record.level().color(level_string_color),
             target,
             record.args()
