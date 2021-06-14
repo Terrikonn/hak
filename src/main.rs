@@ -20,6 +20,7 @@
 #[macro_use]
 extern crate logist;
 
+use arch::independent;
 use bootloader::{
     entry_point,
     BootInfo,
@@ -29,19 +30,17 @@ entry_point!(kernel_main);
 
 static LOGGER: &'static klog::KernelLogger = &klog::KernelLogger::new();
 
-fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
+fn kernel_main(_boot_info: &'static mut BootInfo) -> ! {
     LOGGER.init().unwrap();
-    debug!("This is an example message.");
+    independent::init();
 
-    arch::independent::init();
-
-    arch::independent::low_power_loop();
+    independent::low_power_loop();
 }
 
 /// Custom panic handler
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    klog::println!("{}", info);
+    emerg!("{}", info);
 
-    arch::independent::low_power_loop();
+    independent::low_power_loop();
 }
