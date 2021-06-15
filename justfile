@@ -22,14 +22,14 @@ target_triplet := if target == "x86_64-unknown-none-elf.json" { "x86_64-unknown-
 out_dir := target_dir + target_triplet + "/debug/"
 kernel_binary_path := out_dir + "hak"
 # Build bootable image of kernel
-build_image: build
+build_image firmware="bios": build
 	cd {{justfile_directory()}}/../bootloader && \
 	cargo builder \
 		--kernel-manifest {{kernel_manifest_path}} \
 		--kernel-binary {{kernel_binary_path}} \
 		--target-dir {{target_dir}} \
 		--out-dir {{out_dir}} \
-		--firmware bios
+		--firmware {{firmware}}
 
 
 # TODO: rewrite without hardcoding
