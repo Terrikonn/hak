@@ -28,14 +28,15 @@ build_image: build
 		--kernel-manifest {{kernel_manifest_path}} \
 		--kernel-binary {{kernel_binary_path}} \
 		--target-dir {{target_dir}} \
-		--out-dir {{out_dir}}
+		--out-dir {{out_dir}} \
+		--firmware bios
 
 
 # TODO: rewrite without hardcoding
-kernel_image := out_dir + "boot-bios-hak.img"
+kernel_bios_image := out_dir + "boot-bios-hak.img"
 # Run kernel in qemu
 run: build_image
 	qemu-system-x86_64 \
-	    -drive format=raw,file={{kernel_image}} \
+	    -drive format=raw,file={{kernel_bios_image}} \
 		-serial stdio \
 		-enable-kvm
