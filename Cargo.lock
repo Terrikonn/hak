@@ -6,9 +6,6 @@ version = 3
 name = "arch"
 version = "0.1.0"
 dependencies = [
- "cfg-if",
- "cfg_aliases",
- "match_cfg",
  "riscv",
  "x86_64",
 ]
@@ -45,8 +42,8 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 name = "hak"
 version = "0.1.0"
 dependencies = [
- "arch",
  "bootloader",
+ "hal",
  "klog",
  "logist",
  "spin 0.9.0",
@@ -54,10 +51,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "klog"
+name = "hal"
 version = "0.1.0"
 dependencies = [
  "arch",
+ "cfg-if",
+ "cfg_aliases",
+ "lazy_static",
+ "logist",
+]
+
+[[package]]
+name = "klog"
+version = "0.1.0"
+dependencies = [
+ "hal",
  "lazy_static",
  "logist",
  "owo-colors",
@@ -81,12 +89,6 @@ dependencies = [
  "cfg-if",
  "no-std-compat",
 ]
-
-[[package]]
-name = "match_cfg"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffbee8634e0d45d258acb448e7eaab3fce7a0a467395d4d9f228e3c1f01fb2e4"
 
 [[package]]
 name = "no-std-compat"
@@ -140,7 +142,5 @@ version = "0.1.0"
 dependencies = [
  "bit_field",
  "bitflags",
- "lazy_static",
- "logist",
  "volatile",
 ]

@@ -1,7 +1,6 @@
 #![no_std]
 use core::fmt::Write;
 
-use arch::independent::interrupts;
 use logist::{
     Level,
     LevelFilter,
@@ -30,7 +29,7 @@ lazy_static::lazy_static! {
 
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
-    interrupts::free(|| {
+    hal::interrupts::free(|| {
         SERIAL1
             .lock()
             .write_fmt(args)
