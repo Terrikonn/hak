@@ -6,7 +6,12 @@ alias r := run
 target := "x86_64-unknown-none-elf.json"
 build_core := if target == "x86_64-unknown-none-elf.json" { "-Z build-std=core -Z build-std-features=compiler-builtins-mem" } else { "" }
 
-default: run
+default *ARGS:
+	@just x {{ARGS}}
+
+x *ARGS:
+	@echo x {{ARGS}}
+	@./x.py {{ARGS}}
 
 # Build kernel for given target
 build:
