@@ -2,7 +2,7 @@
 name = "hak"
 version = "0.1.0"
 authors = ["rrremiii <valent.xarin@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [profile.dev]
 opt-level = 0
@@ -12,6 +12,3 @@ lto = false
 opt-level = 3
 lto = true
 codegen-units = 1
-
-# [dependencies]
-# packed_struct = { version = "0.5.0", default-features = false }
