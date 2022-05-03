@@ -32,6 +32,7 @@
           hak = naersk-lib.buildPackage {
             pname = "hak";
             root = ./.;
+            LD_LIBRARY_PATH = "${pkgs.zlib}/lib:$LD_LIBRARY_PATH";
           };
         };
 
