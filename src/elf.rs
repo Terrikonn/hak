@@ -2,31 +2,9 @@ use alloc::collections::VecDeque;
 
 use crate::{
     buffer::Buffer,
-    cpu::{
-        build_satp,
-        memcpy,
-        satp_fence_asid,
-        CpuMode,
-        Registers,
-        SatpMode,
-        TrapFrame,
-    },
-    page::{
-        align_val,
-        map,
-        zalloc,
-        EntryBits,
-        Table,
-        PAGE_SIZE,
-    },
-    process::{
-        Process,
-        ProcessData,
-        ProcessState,
-        NEXT_PID,
-        STACK_ADDR,
-        STACK_PAGES,
-    },
+    cpu::{build_satp, memcpy, satp_fence_asid, CpuMode, Registers, SatpMode, TrapFrame},
+    page::{align_val, map, zalloc, EntryBits, Table, PAGE_SIZE},
+    process::{Process, ProcessData, ProcessState, NEXT_PID, STACK_ADDR, STACK_PAGES},
 };
 // Every ELF file starts with ELF "magic", which is a sequence of four bytes 0x7f followed by
 // capital ELF, which is 0x45, 0x4c, and 0x46 respectively.
@@ -250,7 +228,8 @@ impl File {
             (*my_proc.frame).pc = elf_fl.header.entry_addr;
             // Stack pointer. The stack starts at the bottom and works its
             // way up, so we have to set the stack pointer to the bottom.
-            (*my_proc.frame).regs[Registers::Sp as usize] = STACK_ADDR as usize + STACK_PAGES * PAGE_SIZE;
+            (*my_proc.frame).regs[Registers::Sp as usize] =
+                STACK_ADDR as usize + STACK_PAGES * PAGE_SIZE;
             // USER MODE! This is how we set what'll go into mstatus when we
             // run the process.
             (*my_proc.frame).mode = CpuMode::User as usize;
@@ -259,7 +238,8 @@ impl File {
             // map our table into that register. The switch_to_user
             // function will load .satp into the actual register
             // when the time comes.
-            (*my_proc.frame).satp = build_satp(SatpMode::Sv39, my_proc.pid as usize, my_proc.root as usize);
+            (*my_proc.frame).satp =
+                build_satp(SatpMode::Sv39, my_proc.pid as usize, my_proc.root as usize);
         }
         // The ASID field of the SATP register is only 16-bits, and we reserved
         // 0 for the kernel, even though we run the kernel in machine mode for

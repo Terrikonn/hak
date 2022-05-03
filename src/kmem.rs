@@ -1,14 +1,6 @@
-use core::{
-    mem::size_of,
-    ptr::null_mut,
-};
+use core::{mem::size_of, ptr::null_mut};
 
-use crate::page::{
-    align_val,
-    zalloc,
-    Table,
-    PAGE_SIZE,
-};
+use crate::page::{align_val, zalloc, Table, PAGE_SIZE};
 
 #[repr(usize)]
 enum AllocListFlags {
@@ -221,10 +213,7 @@ pub fn print_table() {
 // in the core library, such as a linked list or B-tree.
 // We want to use these sparingly since we have a coarse-grained
 // allocator.
-use core::alloc::{
-    GlobalAlloc,
-    Layout,
-};
+use core::alloc::{GlobalAlloc, Layout};
 
 // The global allocator is a static constant to a global allocator
 // structure. We don't need any members because we're using this

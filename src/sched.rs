@@ -1,10 +1,6 @@
 use crate::{
     cpu::get_mtime,
-    process::{
-        ProcessState,
-        PROCESS_LIST,
-        PROCESS_LIST_MUTEX,
-    },
+    process::{ProcessState, PROCESS_LIST, PROCESS_LIST_MUTEX},
 };
 
 pub fn schedule() -> usize {
@@ -26,7 +22,7 @@ pub fn schedule() -> usize {
                         ProcessState::Running => {
                             frame_addr = prc.get_frame_address();
                             break 'procfindloop;
-                        },
+                        }
                         ProcessState::Sleeping => {
                             // Awaken sleeping processes whose sleep until is in
                             // the past.
@@ -35,8 +31,8 @@ pub fn schedule() -> usize {
                                 frame_addr = prc.get_frame_address();
                                 break 'procfindloop;
                             }
-                        },
-                        _ => {},
+                        }
+                        _ => {}
                     }
                 }
             }

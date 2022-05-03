@@ -1,22 +1,10 @@
-use alloc::{
-    boxed::Box,
-    collections::BTreeMap,
-    string::String,
-};
+use alloc::{boxed::Box, collections::BTreeMap, string::String};
 use core::mem::size_of;
 
 use crate::{
     buffer::Buffer,
-    cpu::{
-        memcpy,
-        Registers,
-    },
-    process::{
-        add_kernel_process_args,
-        get_by_pid,
-        set_running,
-        set_waiting,
-    },
+    cpu::{memcpy, Registers},
+    process::{add_kernel_process_args, get_by_pid, set_running, set_waiting},
     syscall::syscall_block_read,
 };
 
@@ -80,7 +68,8 @@ pub struct MinixFileSystem;
 // The plan for this in the future is to have a single inode cache. What we
 // will do is have a cache of Node structures which will combine the Inode
 // with the block drive.
-static mut MFS_INODE_CACHE: [Option<BTreeMap<String, Inode>>; 8] = [None, None, None, None, None, None, None, None];
+static mut MFS_INODE_CACHE: [Option<BTreeMap<String, Inode>>; 8] =
+    [None, None, None, None, None, None, None, None];
 
 impl MinixFileSystem {
     /// Inodes are the meta-data of a file, including the mode (permissions and type) and
@@ -113,8 +102,10 @@ impl MinixFileSystem {
             // have to skip the bitmaps blocks. We have a certain number of inode map blocks (imap)
             // and zone map blocks (zmap).
             // The inode comes to us as a NUMBER, not an index. So, we need to subtract 1.
-            let inode_offset = (2 + super_block.imap_blocks + super_block.zmap_blocks) as usize * BLOCK_SIZE as usize +
-                ((inode_num as usize - 1) / (BLOCK_SIZE as usize / size_of::<Inode>())) * BLOCK_SIZE as usize;
+            let inode_offset = (2 + super_block.imap_blocks + super_block.zmap_blocks) as usize
+                * BLOCK_SIZE as usize
+                + ((inode_num as usize - 1) / (BLOCK_SIZE as usize / size_of::<Inode>()))
+                    * BLOCK_SIZE as usize;
 
             // Now, we read the inode itself.
             // The block driver requires that our offset be a multiple of 512. We do that with the
@@ -123,7 +114,8 @@ impl MinixFileSystem {
 
             // There are 1024 / size_of<Inode>() inodes in each read that we can do. However, we need to figure
             // out which inode in that group we need to read. We just take the % of this to find out.
-            let read_this_node = (inode_num as usize - 1) % (BLOCK_SIZE as usize / size_of::<Inode>());
+            let read_this_node =
+                (inode_num as usize - 1) % (BLOCK_SIZE as usize / size_of::<Inode>());
 
             // We copy the inode over. This might not be the best thing since the Inode will
             // eventually have to change after writing.
@@ -190,7 +182,10 @@ impl MinixFileSystem {
                 MFS_INODE_CACHE[bdev - 1] = Some(btm);
             }
         } else {
-            println!("KERNEL: Initialized an already initialized filesystem {}", bdev);
+            println!(
+                "KERNEL: Initialized an already initialized filesystem {}",
+                bdev
+            );
         }
     }
 
@@ -325,7 +320,12 @@ impl MinixFileSystem {
         // point to zones where the data can be found. Just like with the direct zones,
         // we need to make sure the zone isn't 0. A zone of 0 means skip it.
         if inode.zones[7] != 0 {
-            syc_read(bdev, indirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * inode.zones[7]);
+            syc_read(
+                bdev,
+                indirect_buffer.get_mut(),
+                BLOCK_SIZE,
+                BLOCK_SIZE * inode.zones[7],
+            );
             let izones = indirect_buffer.get() as *const u32;
             for i in 0..NUM_IPTRS {
                 // Where do I put unsafe? Dereferencing the pointers and memcpy are the unsafe functions.
@@ -364,7 +364,12 @@ impl MinixFileSystem {
         // // DOUBLY INDIRECT ZONES
         // ////////////////////////////////////////////
         if inode.zones[8] != 0 {
-            syc_read(bdev, indirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * inode.zones[8]);
+            syc_read(
+                bdev,
+                indirect_buffer.get_mut(),
+                BLOCK_SIZE,
+                BLOCK_SIZE * inode.zones[8],
+            );
             unsafe {
                 for i in 0..NUM_IPTRS {
                     if izones.add(i).read() != 0 {
@@ -414,7 +419,12 @@ impl MinixFileSystem {
         // // TRIPLY INDIRECT ZONES
         // ////////////////////////////////////////////
         if inode.zones[9] != 0 {
-            syc_read(bdev, indirect_buffer.get_mut(), BLOCK_SIZE, BLOCK_SIZE * inode.zones[9]);
+            syc_read(
+                bdev,
+                indirect_buffer.get_mut(),
+                BLOCK_SIZE,
+                BLOCK_SIZE * inode.zones[9],
+            );
             unsafe {
                 for i in 0..NUM_IPTRS {
                     if izones.add(i).read() != 0 {
@@ -442,11 +452,12 @@ impl MinixFileSystem {
                                                 BLOCK_SIZE,
                                                 BLOCK_SIZE * iiizones.add(k).read(),
                                             );
-                                            let read_this_many = if BLOCK_SIZE - offset_byte > bytes_left {
-                                                bytes_left
-                                            } else {
-                                                BLOCK_SIZE - offset_byte
-                                            };
+                                            let read_this_many =
+                                                if BLOCK_SIZE - offset_byte > bytes_left {
+                                                    bytes_left
+                                                } else {
+                                                    BLOCK_SIZE - offset_byte
+                                                };
                                             memcpy(
                                                 buffer.add(bytes_read as usize),
                                                 block_buffer.get().add(offset_byte as usize),
@@ -516,7 +527,13 @@ fn read_proc(args_addr: usize) {
     // Start the read! Since we're in a kernel process, we can block by putting this
     // process into a waiting state and wait until the block driver returns.
     let inode = MinixFileSystem::get_inode(args.dev, args.node);
-    let bytes = MinixFileSystem::read(args.dev, &inode.unwrap(), args.buffer, args.size, args.offset);
+    let bytes = MinixFileSystem::read(
+        args.dev,
+        &inode.unwrap(),
+        args.buffer,
+        args.size,
+        args.offset,
+    );
 
     // Let's write the return result into regs[10], which is A0.
     unsafe {

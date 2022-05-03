@@ -1,34 +1,14 @@
 use alloc::{
-    collections::{
-        vec_deque::VecDeque,
-        BTreeMap,
-    },
+    collections::{vec_deque::VecDeque, BTreeMap},
     string::String,
 };
-use core::ptr::null_mut;
+use core::{arch::asm, ptr::null_mut};
 
 use crate::{
-    cpu::{
-        build_satp,
-        get_mtime,
-        satp_fence_asid,
-        CpuMode,
-        Registers,
-        SatpMode,
-        TrapFrame,
-    },
+    cpu::{build_satp, get_mtime, satp_fence_asid, CpuMode, Registers, SatpMode, TrapFrame},
     fs::Inode,
     lock::Mutex,
-    page::{
-        alloc,
-        dealloc,
-        map,
-        unmap,
-        zalloc,
-        EntryBits,
-        Table,
-        PAGE_SIZE,
-    },
+    page::{alloc, dealloc, map, unmap, zalloc, EntryBits, Table, PAGE_SIZE},
     syscall::syscall_exit,
 };
 
@@ -244,10 +224,10 @@ pub fn add_kernel_process(func: fn()) -> u16 {
     // us the only copy of the Deque.
     let func_addr = func as usize;
     let func_v_addr = func_addr; //- 0x6000_0000;
-    // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
-    // We will convert NEXT_PID below into an atomic increment when
-    // we start getting into multi-hart processing. For now, we want
-    // a process. Get it to work, then improve it!
+                                 // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
+                                 // We will convert NEXT_PID below into an atomic increment when
+                                 // we start getting into multi-hart processing. For now, we want
+                                 // a process. Get it to work, then improve it!
     let my_pid = unsafe { NEXT_PID };
     let mut ret_proc = Process {
         frame: zalloc(1) as *mut TrapFrame,
@@ -276,7 +256,8 @@ pub fn add_kernel_process(func: fn()) -> u16 {
         // don't have to do syscall_exit() when a kernel process
         // finishes.
         (*ret_proc.frame).regs[Registers::Ra as usize] = ra_delete_proc as usize;
-        (*ret_proc.frame).regs[Registers::Sp as usize] = ret_proc.stack as usize + STACK_PAGES * 4096;
+        (*ret_proc.frame).regs[Registers::Sp as usize] =
+            ret_proc.stack as usize + STACK_PAGES * 4096;
         (*ret_proc.frame).mode = CpuMode::Machine as usize;
         (*ret_proc.frame).pid = ret_proc.pid as usize;
     }
@@ -334,10 +315,10 @@ pub fn add_kernel_process_args(func: fn(args_ptr: usize), args: usize) -> u16 {
         // us the only copy of the Deque.
         let func_addr = func as usize;
         let func_v_addr = func_addr; //- 0x6000_0000;
-        // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
-        // We will convert NEXT_PID below into an atomic increment when
-        // we start getting into multi-hart processing. For now, we want
-        // a process. Get it to work, then improve it!
+                                     // println!("func_addr = {:x} -> {:x}", func_addr, func_vaddr);
+                                     // We will convert NEXT_PID below into an atomic increment when
+                                     // we start getting into multi-hart processing. For now, we want
+                                     // a process. Get it to work, then improve it!
         let my_pid = unsafe { NEXT_PID };
         let mut ret_proc = Process {
             frame: zalloc(1) as *mut TrapFrame,
@@ -367,7 +348,8 @@ pub fn add_kernel_process_args(func: fn(args_ptr: usize), args: usize) -> u16 {
             // don't have to do syscall_exit() when a kernel process
             // finishes.
             (*ret_proc.frame).regs[Registers::Ra as usize] = ra_delete_proc as usize;
-            (*ret_proc.frame).regs[Registers::Sp as usize] = ret_proc.stack as usize + STACK_PAGES * 4096;
+            (*ret_proc.frame).regs[Registers::Sp as usize] =
+                ret_proc.stack as usize + STACK_PAGES * 4096;
             (*ret_proc.frame).mode = CpuMode::Machine as usize;
             (*ret_proc.frame).pid = ret_proc.pid as usize;
         }
@@ -537,14 +519,24 @@ impl Process {
         let pt;
         unsafe {
             pt = &mut *ret_proc.root;
-            (*ret_proc.frame).satp = build_satp(SatpMode::Sv39, ret_proc.pid as usize, ret_proc.root as usize);
+            (*ret_proc.frame).satp = build_satp(
+                SatpMode::Sv39,
+                ret_proc.pid as usize,
+                ret_proc.root as usize,
+            );
         }
         // We need to map the stack onto the user process' virtual
         // memory This gets a little hairy because we need to also map
         // the function code too.
         for i in 0..STACK_PAGES {
             let addr = i * PAGE_SIZE;
-            map(pt, STACK_ADDR + addr, s_addr + addr, EntryBits::UserReadWrite.val(), 0);
+            map(
+                pt,
+                STACK_ADDR + addr,
+                s_addr + addr,
+                EntryBits::UserReadWrite.val(),
+                0,
+            );
             // println!("Set stack from 0x{:016x} -> 0x{:016x}",
             // STACK_ADDR + addr, saddr + addr);
         }

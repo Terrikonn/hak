@@ -6,10 +6,7 @@
 // };
 
 use crate::{
-    cpu::{
-        TrapFrame,
-        CONTEXT_SWITCH_TIME,
-    },
+    cpu::{TrapFrame, CONTEXT_SWITCH_TIME},
     plic,
     process::delete_process,
     rust_switch_to_user,
@@ -62,7 +59,7 @@ extern "C" fn m_trap(
                 // We will use this to awaken our other CPUs so they can process
                 // processes.
                 println!("Machine software interrupt CPU #{}", hart);
-            },
+            }
             7 => {
                 // This is the context-switch timer.
                 // We would typically invoke the scheduler here to pick another
@@ -73,7 +70,7 @@ extern "C" fn m_trap(
                 if new_frame != 0 {
                     rust_switch_to_user(new_frame);
                 }
-            },
+            }
             11 => {
                 // Machine external (interrupt from Platform Interrupt Controller (PLIC))
                 // println!("Machine external interrupt CPU#{}", hart);
@@ -82,17 +79,20 @@ extern "C" fn m_trap(
                 // get an interrupt from a non-PLIC source. This is the main reason that the PLIC
                 // hardwires the id 0 to 0, so that we can use it as an error case.
                 plic::handle_interrupt();
-            },
+            }
             _ => {
                 panic!("Unhandled async trap CPU#{} -> {}\n", hart, cause_num);
-            },
+            }
         }
     } else {
         // Synchronous trap
         match cause_num {
             2 => unsafe {
                 // Illegal instruction
-                println!("Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n", hart, epc, tval);
+                println!(
+                    "Illegal instruction CPU#{} -> 0x{:08x}: 0x{:08x}\n",
+                    hart, epc, tval
+                );
                 // We need while trues here until we have a functioning "delete from scheduler"
                 // I use while true because Rust will warn us that it looks stupid.
                 // This is what I want so that I remember to remove this and replace
@@ -130,7 +130,10 @@ extern "C" fn m_trap(
             // Page faults
             12 => unsafe {
                 // Instruction page fault
-                println!("Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!(
+                    "Instruction page fault CPU#{} -> 0x{:08x}: 0x{:08x}",
+                    hart, epc, tval
+                );
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -138,7 +141,10 @@ extern "C" fn m_trap(
             },
             13 => unsafe {
                 // Load page fault
-                println!("Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!(
+                    "Load page fault CPU#{} -> 0x{:08x}: 0x{:08x}",
+                    hart, epc, tval
+                );
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -146,7 +152,10 @@ extern "C" fn m_trap(
             },
             15 => unsafe {
                 // Store page fault
-                println!("Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}", hart, epc, tval);
+                println!(
+                    "Store page fault CPU#{} -> 0x{:08x}: 0x{:08x}",
+                    hart, epc, tval
+                );
                 delete_process((*frame).pid as u16);
                 let frame = schedule();
                 schedule_next_context_switch(1);
@@ -157,7 +166,7 @@ extern "C" fn m_trap(
                     "Unhandled sync trap {}. CPU#{} -> 0x{:08x}: 0x{:08x}\n",
                     cause_num, hart, epc, tval
                 );
-            },
+            }
         }
     };
     // Finally, return the updated program counter
@@ -169,6 +178,10 @@ pub const MMIO_MTIME: *const u64 = 0x0200_BFF8 as *const u64;
 
 pub fn schedule_next_context_switch(qm: u16) {
     unsafe {
-        MMIO_MTIMECMP.write_volatile(MMIO_MTIME.read_volatile().wrapping_add(CONTEXT_SWITCH_TIME * qm as u64));
+        MMIO_MTIMECMP.write_volatile(
+            MMIO_MTIME
+                .read_volatile()
+                .wrapping_add(CONTEXT_SWITCH_TIME * qm as u64),
+        );
     }
 }

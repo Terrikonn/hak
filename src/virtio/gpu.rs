@@ -1,26 +1,12 @@
 #![allow(dead_code)]
-use core::{
-    mem::size_of,
-    ptr::null_mut,
-};
+use core::{mem::size_of, ptr::null_mut};
 
 use crate::{
-    kmem::{
-        kfree,
-        kmalloc,
-    },
-    page::{
-        zalloc,
-        PAGE_SIZE,
-    },
+    kmem::{kfree, kmalloc},
+    page::{zalloc, PAGE_SIZE},
     virtio,
     virtio::{
-        Descriptor,
-        MmioOffsets,
-        Queue,
-        StatusField,
-        VIRTIO_DESC_F_NEXT,
-        VIRTIO_DESC_F_WRITE,
+        Descriptor, MmioOffsets, Queue, StatusField, VIRTIO_DESC_F_NEXT, VIRTIO_DESC_F_WRITE,
         VIRTIO_RING_SIZE,
     },
 };
@@ -94,7 +80,12 @@ pub struct Rect {
 
 impl Rect {
     pub const fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 #[repr(C)]
@@ -312,7 +303,11 @@ pub fn stroke_rect(dev: &mut Device, rect: Rect, color: Pixel, size: u32) {
     // Top
     fill_rect(dev, Rect::new(rect.x, rect.y, rect.width, size), color);
     // Bottom
-    fill_rect(dev, Rect::new(rect.x, rect.y + rect.height, rect.width, size), color);
+    fill_rect(
+        dev,
+        Rect::new(rect.x, rect.y + rect.height, rect.width, size),
+        color,
+    );
     // Left
     fill_rect(dev, Rect::new(rect.x, rect.y, size, rect.height), color);
 
@@ -328,7 +323,11 @@ pub fn init(gdev: usize) {
     if let Some(mut dev) = unsafe { GPU_DEVICES[gdev - 1].take() } {
         // Put some crap in the framebuffer:
         // First clear the buffer to white?
-        fill_rect(&mut dev, Rect::new(0, 0, 640, 480), Pixel::new(2, 2, 2, 255));
+        fill_rect(
+            &mut dev,
+            Rect::new(0, 0, 640, 480),
+            Pixel::new(2, 2, 2, 255),
+        );
         // fill_rect(&mut dev, Rect::new(15, 15, 200, 200), Pixel::new(255, 130, 0, 255));
         // stroke_rect(&mut dev, Rect::new( 255, 15, 150, 150), Pixel::new( 0, 0, 0, 255), 5);
         // draw_cosine(&mut dev, Rect::new(0, 300, 550, 60), Pixel::new(255, 15, 15, 255));
@@ -520,7 +519,9 @@ pub fn init(gdev: usize) {
         }
         // Run Queue
         unsafe {
-            dev.dev.add(MmioOffsets::QueueNotify.scale32()).write_volatile(0);
+            dev.dev
+                .add(MmioOffsets::QueueNotify.scale32())
+                .write_volatile(0);
             GPU_DEVICES[gdev - 1].replace(dev);
         }
     }
@@ -600,7 +601,9 @@ pub fn transfer(gdev: usize, x: u32, y: u32, width: u32, height: u32) {
         }
         // Run Queue
         unsafe {
-            dev.dev.add(MmioOffsets::QueueNotify.scale32()).write_volatile(0);
+            dev.dev
+                .add(MmioOffsets::QueueNotify.scale32())
+                .write_volatile(0);
             GPU_DEVICES[gdev - 1].replace(dev);
         }
     }
@@ -619,10 +622,12 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(0);
     let mut status_bits = StatusField::Acknowledge.val32();
     // 2. Set ACKNOWLEDGE status bit
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 3. Set the DRIVER status bit
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 4. Read device feature bits, write subset of feature
     // bits understood by OS and driver    to the device.
     let host_features = ptr.add(MmioOffsets::HostFeatures.scale32()).read_volatile();
@@ -630,7 +635,8 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
         .write_volatile(host_features);
     // 5. Set the FEATURES_OK status bit
     status_bits |= StatusField::FeaturesOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 6. Re-read status to ensure FEATURES_OK is still set.
     // Otherwise, it doesn't support our features.
     let status_ok = ptr.add(MmioOffsets::Status.scale32()).read_volatile();
@@ -692,7 +698,8 @@ pub unsafe fn setup_gpu_device(ptr: *mut u32) -> bool {
         .write_volatile(queue_pfn / PAGE_SIZE as u32);
     // 8. Set the DRIVER_OK status bit. Device is now "live"
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
 
     // We are going to give the framebuffer to user space, so this needs to be page aligned
     // so that we can map it into the user space's MMU. This is why we don't want kmalloc here!

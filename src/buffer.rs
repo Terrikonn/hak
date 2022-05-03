@@ -1,17 +1,11 @@
 use core::{
-    ops::{
-        Index,
-        IndexMut,
-    },
+    ops::{Index, IndexMut},
     ptr::null_mut,
 };
 
 use crate::{
     cpu::memcpy,
-    kmem::{
-        kfree,
-        kmalloc,
-    },
+    kmem::{kfree, kmalloc},
 };
 // We need a Buffer that can automatically be created and destroyed
 // in the lifetime of our read and write functions. In C, this would entail

@@ -1,7 +1,4 @@
-use crate::{
-    fs::MinixFileSystem,
-    syscall,
-};
+use crate::{fs::MinixFileSystem, syscall};
 /// Test block will load raw binaries into memory to execute them. This function
 /// will load ELF files and try to execute them.
 pub fn test() {

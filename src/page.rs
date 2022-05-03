@@ -1,7 +1,4 @@
-use core::{
-    mem::size_of,
-    ptr::null_mut,
-};
+use core::{mem::size_of, ptr::null_mut};
 
 // ////////////////////////////////
 // // Allocation routines
@@ -258,7 +255,11 @@ pub fn print_page_allocations() {
             beg = beg.add(1);
         }
         println!("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-        println!("Allocated: {:>6} pages ({:>10} bytes).", num, num * PAGE_SIZE);
+        println!(
+            "Allocated: {:>6} pages ({:>10} bytes).",
+            num,
+            num * PAGE_SIZE
+        );
         println!(
             "Free     : {:>6} pages ({:>10} bytes).",
             num_pages - num,

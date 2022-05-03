@@ -3,6 +3,9 @@
 //! for process context capture.
 //!
 //! Check [RISC-V specifications](https://riscv.org/technical/specifications/) for further research
+
+use core::arch::asm;
+
 /// The frequency of QEMU timer interrupt
 pub const FREQ: u64 = 10_000_000;
 /// Switch process context of process 250 time per second

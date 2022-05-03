@@ -2,28 +2,10 @@ use alloc::boxed::Box;
 use core::mem::size_of;
 
 use crate::{
-    kmem::{
-        kfree,
-        kmalloc,
-    },
-    page::{
-        zalloc,
-        PAGE_SIZE,
-    },
-    process::{
-        add_kernel_process_args,
-        get_by_pid,
-        set_running,
-        set_waiting,
-    },
-    virtio::{
-        self,
-        Descriptor,
-        MmioOffsets,
-        Queue,
-        StatusField,
-        VIRTIO_RING_SIZE,
-    },
+    kmem::{kfree, kmalloc},
+    page::{zalloc, PAGE_SIZE},
+    process::{add_kernel_process_args, get_by_pid, set_running, set_waiting},
+    virtio::{self, Descriptor, MmioOffsets, Queue, StatusField, VIRTIO_RING_SIZE},
 };
 
 #[repr(C)]
@@ -155,7 +137,8 @@ pub enum BlockErrors {
 // value type to signal that the variable exists, but not the
 // queue itself. We will replace this with an actual queue when
 // we initialize the block system.
-static mut BLOCK_DEVICES: [Option<BlockDevice>; 8] = [None, None, None, None, None, None, None, None];
+static mut BLOCK_DEVICES: [Option<BlockDevice>; 8] =
+    [None, None, None, None, None, None, None, None];
 
 pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     // We can get the index of the device based on its address.
@@ -171,10 +154,12 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(0);
     let mut status_bits = StatusField::Acknowledge.val32();
     // 2. Set ACKNOWLEDGE status bit
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 3. Set the DRIVER status bit
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 4. Read device feature bits, write subset of feature
     // bits understood by OS and driver    to the device.
     let host_features = ptr.add(MmioOffsets::HostFeatures.scale32()).read_volatile();
@@ -184,7 +169,8 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
         .write_volatile(guest_features);
     // 5. Set the FEATURES_OK status bit
     status_bits |= StatusField::FeaturesOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 6. Re-read status to ensure FEATURES_OK is still set.
     // Otherwise, it doesn't support our features.
     let status_ok = ptr.add(MmioOffsets::Status.scale32()).read_volatile();
@@ -197,21 +183,21 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
         ptr.add(MmioOffsets::Status.scale32())
             .write_volatile(StatusField::Failed.val32());
         return false;
-    }    // 7. Perform device-specific setup.
-    // Set the queue num. We have to make sure that the
-    // queue size is valid because the device can only take
-    // a certain size.
+    } // 7. Perform device-specific setup.
+      // Set the queue num. We have to make sure that the
+      // queue size is valid because the device can only take
+      // a certain size.
     let qnmax = ptr.add(MmioOffsets::QueueNumMax.scale32()).read_volatile();
     ptr.add(MmioOffsets::QueueNum.scale32())
         .write_volatile(VIRTIO_RING_SIZE as u32);
     if VIRTIO_RING_SIZE as u32 > qnmax {
         print!("queue size fail...");
         return false;
-    }    // First, if the block device array is empty, create it!
-    // We add 4095 to round this up and then do an integer
-    // divide to truncate the decimal. We don't add 4096,
-    // because if it is exactly 4096 bytes, we would get two
-    // pages, not one.
+    } // First, if the block device array is empty, create it!
+      // We add 4095 to round this up and then do an integer
+      // divide to truncate the decimal. We don't add 4096,
+      // because if it is exactly 4096 bytes, we would get two
+      // pages, not one.
     let num_pages = (size_of::<Queue>() + PAGE_SIZE - 1) / PAGE_SIZE;
     // println!("np = {}", num_pages);
     // We allocate a page for each device. This will the the
@@ -254,7 +240,8 @@ pub unsafe fn setup_block_device(ptr: *mut u32) -> bool {
 
     // 8. Set the DRIVER_OK status bit. Device is now "live"
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
 
     true
 }
@@ -319,7 +306,11 @@ pub fn block_op(
             (*blk_request).header.sector = sector;
             // A write is an "out" direction, whereas a read is an
             // "in" direction.
-            (*blk_request).header.blktype = if write { VIRTIO_BLK_T_OUT } else { VIRTIO_BLK_T_IN };
+            (*blk_request).header.blktype = if write {
+                VIRTIO_BLK_T_OUT
+            } else {
+                VIRTIO_BLK_T_IN
+            };
             // We put 111 in the status. Whenever the device
             // finishes, it will write into status. If we read
             // status and it is 111, we know that it wasn't written
@@ -331,7 +322,12 @@ pub fn block_op(
             let desc = Descriptor {
                 addr: buffer as u64,
                 len: size,
-                flags: virtio::VIRTIO_DESC_F_NEXT | if write { 0 } else { virtio::VIRTIO_DESC_F_WRITE },
+                flags: virtio::VIRTIO_DESC_F_NEXT
+                    | if write {
+                        0
+                    } else {
+                        virtio::VIRTIO_DESC_F_WRITE
+                    },
                 next: 0,
             };
             let _data_idx = fill_next_descriptor(bdev, desc);
@@ -342,11 +338,14 @@ pub fn block_op(
                 next: 0,
             };
             let _status_idx = fill_next_descriptor(bdev, desc);
-            (*bdev.queue).avail.ring[(*bdev.queue).avail.idx as usize % virtio::VIRTIO_RING_SIZE] = head_idx;
+            (*bdev.queue).avail.ring[(*bdev.queue).avail.idx as usize % virtio::VIRTIO_RING_SIZE] =
+                head_idx;
             (*bdev.queue).avail.idx = (*bdev.queue).avail.idx.wrapping_add(1);
             // The only queue a block device has is 0, which is the
             // request queue.
-            bdev.dev.add(MmioOffsets::QueueNotify.scale32()).write_volatile(0);
+            bdev.dev
+                .add(MmioOffsets::QueueNotify.scale32())
+                .write_volatile(0);
             Ok(size)
         } else {
             Err(BlockErrors::BlockDeviceNotFound)
@@ -419,7 +418,14 @@ struct ProcArgs {
 /// This will be a
 fn read_proc(args_addr: usize) {
     let args = unsafe { Box::from_raw(args_addr as *mut ProcArgs) };
-    let _ = block_op(args.dev, args.buffer, args.size, args.offset, false, args.pid);
+    let _ = block_op(
+        args.dev,
+        args.buffer,
+        args.size,
+        args.offset,
+        false,
+        args.pid,
+    );
     // This should be handled by the RA now.
     // syscall_exit();
 }
@@ -442,7 +448,14 @@ pub fn process_read(pid: u16, dev: usize, buffer: *mut u8, size: u32, offset: u6
 fn write_proc(args_addr: usize) {
     let args = unsafe { Box::from_raw(args_addr as *mut ProcArgs) };
 
-    let _ = block_op(args.dev, args.buffer, args.size, args.offset, true, args.pid);
+    let _ = block_op(
+        args.dev,
+        args.buffer,
+        args.size,
+        args.offset,
+        true,
+        args.pid,
+    );
     // syscall_exit();
 }
 

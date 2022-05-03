@@ -1,7 +1,4 @@
-use crate::{
-    uart::Uart,
-    virtio,
-};
+use crate::{uart::Uart, virtio};
 
 const PLIC_PRIORITY: usize = 0x0c00_0000;
 const PLIC_PENDING: usize = 0x0c00_1000;
@@ -116,7 +113,7 @@ pub fn handle_interrupt() {
         match interrupt {
             1..=8 => {
                 virtio::handle_interrupt(interrupt);
-            },
+            }
             10 => {
                 // Interrupt 10 is the UART interrupt.
                 // We would typically set this to be handled out of the interrupt context,
@@ -135,20 +132,20 @@ pub fn handle_interrupt() {
                             // essentially have to write a space and
                             // backup again:
                             print!("{} {}", 8 as char, 8 as char);
-                        },
+                        }
                         10 | 13 => {
                             // Newline or carriage-return
                             println!();
-                        },
+                        }
                         _ => {
                             print!("{}", c as char);
-                        },
+                        }
                     }
                 }
-            },
+            }
             _ => {
                 println!("Unknown external interrupt: {}", interrupt);
-            },
+            }
         }
         // We've claimed it, so now say that we've handled it. This resets the interrupt pending
         // and allows the UART to interrupt again. Otherwise, the UART will get "stuck".

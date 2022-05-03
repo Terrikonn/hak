@@ -1,26 +1,11 @@
 #![allow(dead_code)]
-use core::{
-    mem::size_of,
-    ptr::null_mut,
-};
+use core::{mem::size_of, ptr::null_mut};
 
 use crate::{
-    kmem::{
-        kfree,
-        kmalloc,
-    },
-    page::{
-        zalloc,
-        PAGE_SIZE,
-    },
+    kmem::{kfree, kmalloc},
+    page::{zalloc, PAGE_SIZE},
     virtio,
-    virtio::{
-        Descriptor,
-        MmioOffsets,
-        Queue,
-        StatusField,
-        VIRTIO_RING_SIZE,
-    },
+    virtio::{Descriptor, MmioOffsets, Queue, StatusField, VIRTIO_RING_SIZE},
 };
 
 pub struct EntropyDevice {
@@ -40,7 +25,8 @@ impl EntropyDevice {
     }
 }
 
-static mut ENTROPY_DEVICES: [Option<EntropyDevice>; 8] = [None, None, None, None, None, None, None, None];
+static mut ENTROPY_DEVICES: [Option<EntropyDevice>; 8] =
+    [None, None, None, None, None, None, None, None];
 
 pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     // We can get the index of the device based on its address.
@@ -55,10 +41,12 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
     ptr.add(MmioOffsets::Status.scale32()).write_volatile(0);
     let mut status_bits = StatusField::Acknowledge.val32();
     // 2. Set ACKNOWLEDGE status bit
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 3. Set the DRIVER status bit
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 4. Read device feature bits, write subset of feature
     // bits understood by OS and driver    to the device.
     let host_features = ptr.add(MmioOffsets::HostFeatures.scale32()).read_volatile();
@@ -66,7 +54,8 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
         .write_volatile(host_features);
     // 5. Set the FEATURES_OK status bit
     status_bits |= StatusField::FeaturesOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
     // 6. Re-read status to ensure FEATURES_OK is still set.
     // Otherwise, it doesn't support our features.
     let status_ok = ptr.add(MmioOffsets::Status.scale32()).read_volatile();
@@ -126,7 +115,8 @@ pub unsafe fn setup_entropy_device(ptr: *mut u32) -> bool {
         .write_volatile(queue_pfn / PAGE_SIZE as u32);
     // 8. Set the DRIVER_OK status bit. Device is now "live"
     status_bits |= StatusField::DriverOk.val32();
-    ptr.add(MmioOffsets::Status.scale32()).write_volatile(status_bits);
+    ptr.add(MmioOffsets::Status.scale32())
+        .write_volatile(status_bits);
 
     let rngdev = EntropyDevice {
         queue: queue_ptr,

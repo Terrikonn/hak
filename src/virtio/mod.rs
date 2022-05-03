@@ -3,9 +3,7 @@ use core::mem::size_of;
 use crate::{
     page::PAGE_SIZE,
     virtio::{
-        block::setup_block_device,
-        gpu::setup_gpu_device,
-        input::setup_input_device,
+        block::setup_block_device, gpu::setup_gpu_device, input::setup_input_device,
         rng::setup_entropy_device,
     },
 };
@@ -74,7 +72,8 @@ pub struct Queue {
     pub avail: Available,
     // Calculating padding, we need the used ring to start on a page boundary. We take the page size, subtract the
     // amount the descriptor ring takes then subtract the available structure and ring.
-    pub padding0: [u8; PAGE_SIZE - size_of::<Descriptor>() * VIRTIO_RING_SIZE - size_of::<Available>()],
+    pub padding0:
+        [u8; PAGE_SIZE - size_of::<Descriptor>() * VIRTIO_RING_SIZE - size_of::<Available>()],
     pub used: Used,
 }
 
@@ -235,7 +234,8 @@ impl VirtioDevice {
     }
 }
 
-static mut VIRTIO_DEVICES: [Option<VirtioDevice>; 8] = [None, None, None, None, None, None, None, None];
+static mut VIRTIO_DEVICES: [Option<VirtioDevice>; 8] =
+    [None, None, None, None, None, None, None, None];
 
 /// Probe the `VirtIO` bus for devices that might be
 /// out there.
@@ -277,7 +277,7 @@ pub fn probe() {
                     } else {
                         println!("setup failed.");
                     }
-                },
+                }
                 // DeviceID 2 is a block device
                 2 => {
                     print!("block device...");
@@ -290,7 +290,7 @@ pub fn probe() {
                     } else {
                         println!("setup failed.");
                     }
-                },
+                }
                 // DeviceID 4 is a random number generator device
                 4 => {
                     print!("entropy device...");
@@ -299,7 +299,7 @@ pub fn probe() {
                     } else {
                         println!("setup failed.");
                     }
-                },
+                }
                 // DeviceID 16 is a GPU device
                 16 => {
                     print!("GPU device...");
@@ -312,7 +312,7 @@ pub fn probe() {
                     } else {
                         println!("setup failed.");
                     }
-                },
+                }
                 // DeviceID 18 is an input device
                 18 => {
                     print!("input device...");
@@ -325,7 +325,7 @@ pub fn probe() {
                     } else {
                         println!("setup failed.");
                     }
-                },
+                }
                 _ => println!("unknown device type."),
             }
         }
@@ -348,16 +348,16 @@ pub fn handle_interrupt(interrupt: u32) {
             match vd.devtype {
                 DeviceTypes::Block => {
                     block::handle_interrupt(idx);
-                },
+                }
                 DeviceTypes::Gpu => {
                     gpu::handle_interrupt(idx);
-                },
+                }
                 DeviceTypes::Input => {
                     input::handle_interrupt(idx);
-                },
+                }
                 _ => {
                     println!("Invalid device generated interrupt!");
-                },
+                }
             }
         } else {
             println!("Spurious interrupt {}", interrupt);

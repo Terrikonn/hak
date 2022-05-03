@@ -1,4 +1,4 @@
-use core::convert::TryFrom;
+use core::{arch::asm, convert::TryFrom};
 
 use crate::syscall::syscall_sleep;
 
