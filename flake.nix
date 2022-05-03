@@ -38,6 +38,9 @@
         defaultPackage = packages.hak;
 
         # `nix develop`
-        devShell = pkgs.mkShell { nativeBuildInputs = [ rust-toolchain ]; };
+        devShell = pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [ rust-toolchain zlib ];
+          LD_LIBRARY_PATH = "${pkgs.zlib}/lib:$LD_LIBRARY_PATH";
+        };
       });
 }
